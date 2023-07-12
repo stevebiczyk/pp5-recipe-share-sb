@@ -1,13 +1,20 @@
 import React, { useState } from "react";
 import { Link, useHistory } from "react-router-dom";
 
-import styles from "../../styles/RegisterSignUpForm.module.css";
+import styles from "../../styles/RegisterLogInForm.module.css";
 import btnStyles from "../../styles/Button.module.css";
 import appStyles from "../../App.module.css";
+import axios from "axios";
 
-import { Form, Button, Image, Col, Row, Container } from "react-bootstrap";
-import { useState } from "react";
-// import { useHistory } from "react-router-dom/cjs/react-router-dom";
+import {
+  Form,
+  Button,
+  Image,
+  Col,
+  Row,
+  Container,
+  Alert,
+} from "react-bootstrap";
 
 const RegistrationForm = () => {
   const [registrationData, setRegistrationData] = useState({
@@ -44,10 +51,10 @@ const RegistrationForm = () => {
     <Row className={styles.Row}>
       <Col className="my-auto py-2 p-md-2" md={6}>
         <Container className={`${appStyles.Content} p-4 `}>
-          <h1 className={styles.Header}>register</h1>
+          <h1 className={styles.Header}>Register</h1>
           <Form onSubmit={handleSubmit}>
             <Form.Group controlId="username">
-              <Form.Label className="d-none">username</Form.Label>
+              <Form.Label className="d-none">Username</Form.Label>
               <Form.Control
                 className={styles.Input}
                 type="text"
@@ -55,6 +62,7 @@ const RegistrationForm = () => {
                 name="username"
                 value={username}
                 onChange={handleChange}
+                required
               />
             </Form.Group>
             {errors.username?.map((message, idx) => (
@@ -72,6 +80,7 @@ const RegistrationForm = () => {
                 name="email"
                 value={email}
                 onChange={handleChange}
+                required
               />
             </Form.Group>
             {errors.email?.map((message, idx) => (
@@ -86,8 +95,10 @@ const RegistrationForm = () => {
                 type="password"
                 placeholder="Password"
                 name="password1"
+                className={styles.Input}
                 value={password1}
                 onChange={handleChange}
+                required
               />
             </Form.Group>
             {errors.password1?.map((message, idx) => (
@@ -102,8 +113,10 @@ const RegistrationForm = () => {
                 type="password"
                 placeholder="Confirm Password"
                 name="password2"
+                className={styles.Input}
                 value={password2}
                 onChange={handleChange}
+                required
               />
             </Form.Group>
             {errors.password2?.map((message, idx) => (
@@ -124,13 +137,13 @@ const RegistrationForm = () => {
         </Container>
         <Container className={`mt-3 ${appStyles.Content}`}>
           <Link className={styles.Link} to="/signin">
-            Already have an account? <span>Sign in</span>
+            Already have an account? <span>Log in</span>
           </Link>
         </Container>
       </Col>
       <Col
         md={6}
-        className={`my-auto d-none d-md-block p-2 ${styles.SignUpCol}`}
+        className={`my-auto d-none d-md-block p-2 ${styles.RegisterCol}`}
       >
         <Image
           className={`${appStyles.FillerImage}`}
