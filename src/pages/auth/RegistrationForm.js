@@ -19,12 +19,11 @@ import {
 const RegistrationForm = () => {
   const [registrationData, setRegistrationData] = useState({
     username: "",
-    email: "",
     password1: "",
     password2: "",
   });
 
-  const { username, email, password1, password2 } = registrationData;
+  const { username, password1, password2 } = registrationData;
 
   const [errors, setErrors] = useState({});
 
@@ -66,24 +65,6 @@ const RegistrationForm = () => {
               />
             </Form.Group>
             {errors.username?.map((message, idx) => (
-              <Alert variant="warning" key={idx}>
-                {message}
-              </Alert>
-            ))}
-
-            <Form.Group controlId="email">
-              <Form.Label className="d-none">Email address</Form.Label>
-              <Form.Control
-                className={styles.Input}
-                type="email"
-                placeholder="Enter email"
-                name="email"
-                value={email}
-                onChange={handleChange}
-                required
-              />
-            </Form.Group>
-            {errors.email?.map((message, idx) => (
               <Alert variant="warning" key={idx}>
                 {message}
               </Alert>

@@ -23,10 +23,20 @@ function RecipeCreateForm() {
 
   const [recipeData, setRecipeData] = useState({
     title: "",
+    ingredients: "",
     instructions: "",
+    cooking_time: "",
     image: "",
+    difficulty_level: "",
   });
-  const { title, instructions, image } = recipeData;
+  const {
+    title,
+    ingredients,
+    instructions,
+    cooking_time,
+    image,
+    difficulty_level,
+  } = recipeData;
 
   const imageInput = useRef(null);
 
@@ -54,8 +64,11 @@ function RecipeCreateForm() {
     const formData = new FormData();
 
     formData.append("title", title);
+    formData.append("ingredients", ingredients);
     formData.append("instructions", instructions);
+    formData.append("cooking_time", cooking_time);
     formData.append("image", imageInput.current.files[0]);
+    formData.append("difficulty_level", difficulty_level);
 
     try {
       const { data } = await axiosReq.post("/recipes/", formData);
@@ -86,6 +99,22 @@ function RecipeCreateForm() {
       ))}
 
       <Form.Group>
+        <Form.Label>Ingredients</Form.Label>
+        <Form.Control
+          as="textarea"
+          rows={6}
+          name="ingredients"
+          value={ingredients}
+          onChange={handleChange}
+        />
+      </Form.Group>
+      {errors?.ingredients?.map((message, idx) => (
+        <Alert variant="warning" key={idx}>
+          {message}
+        </Alert>
+      ))}
+
+      <Form.Group>
         <Form.Label>Instructions</Form.Label>
         <Form.Control
           as="textarea"
@@ -96,6 +125,40 @@ function RecipeCreateForm() {
         />
       </Form.Group>
       {errors?.instructions?.map((message, idx) => (
+        <Alert variant="warning" key={idx}>
+          {message}
+        </Alert>
+      ))}
+
+      <Form.Group>
+        <Form.Label>Cooking Time (minutes)</Form.Label>
+        <Form.Control
+          type="number"
+          name="cooking_time"
+          value={cooking_time}
+          onChange={handleChange}
+        />
+      </Form.Group>
+      {errors?.cooking_time?.map((message, idx) => (
+        <Alert variant="warning" key={idx}>
+          {message}
+        </Alert>
+      ))}
+      <Form.Group>
+        <Form.Label>Difficulty Level</Form.Label>
+        <Form.Control
+          as="select"
+          name="difficulty_level"
+          value={difficulty_level}
+          onChange={handleChange}
+        >
+          <option value="">Select</option>
+          <option value="Easy">Easy</option>
+          <option value="Medium">Medium</option>
+          <option value="Hard">Hard</option>
+        </Form.Control>
+      </Form.Group>
+      {errors?.difficulty_level?.map((message, idx) => (
         <Alert variant="warning" key={idx}>
           {message}
         </Alert>
