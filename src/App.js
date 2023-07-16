@@ -14,7 +14,23 @@ function App() {
       <NavBar />
       <Container className={styles.Main}>
         <Switch>
-          <Route exact path="/" render={() => <h1>Home Page</h1>} />
+          <Route
+            exact
+            path="/"
+            render={() => (
+              <RecipesPage message="No results found. Adjust the search keyword." />
+            )}
+          />
+          <Route
+            exact
+            path="/feed"
+            render={() => (
+              <RecipesPage
+                message="No results found. Adjust the search keyword or follow a user."
+                filter={`owner__followed__owner__profile=${profile_id}&`}
+              />
+            )}
+          />
           <Route exact path="/login" render={() => <LogInForm />} />
           <Route exact path="/register" render={() => <RegistrationForm />} />
           <Route
