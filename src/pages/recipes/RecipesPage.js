@@ -60,7 +60,7 @@ function RecipesPage({ message, filter = "" }) {
             onChange={(event) => setQuery(event.target.value)}
             type="text"
             className="mr-sm-2"
-            placeholder="Search posts"
+            placeholder="Search recipes"
           />
         </Form>
         {hasLoaded ? (
@@ -68,7 +68,7 @@ function RecipesPage({ message, filter = "" }) {
             {recipes.results.length ? (
               <InfiniteScroll
                 children={recipes.results.map((recipe) => (
-                  <Post key={recipe.id} {...recipe} setRecipes={setRecipes} />
+                  <Recipe key={recipe.id} {...recipe} setRecipes={setRecipes} />
                 ))}
                 dataLength={recipes.results.length}
                 loader={<Asset spinner />}

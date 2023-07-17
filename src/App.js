@@ -7,8 +7,13 @@ import RegistrationForm from "./pages/auth/RegistrationForm";
 import LogInForm from "./pages/auth/LogInForm";
 import RecipeCreateForm from "./pages/recipes/RecipeCreateForm";
 import RecipePage from "./pages/recipes/RecipePage";
+import RecipesPage from "./pages/recipes/RecipesPage";
+import { useCurrentUser } from "./contexts/CurrentUserContext";
 
 function App() {
+  const currentUser = useCurrentUser();
+  const profile_id = currentUser?.profile_id || "";
+
   return (
     <div className={styles.App}>
       <NavBar />
@@ -28,6 +33,16 @@ function App() {
               <RecipesPage
                 message="No results found. Adjust the search keyword or follow a user."
                 filter={`owner__followed__owner__profile=${profile_id}&`}
+              />
+            )}
+          />
+          <Route
+            exact
+            path="/liked"
+            render={() => (
+              <RecipesPage
+                message="No results found. Adjust the search keyword or like a recipe."
+                filter={`likes__owner__profile=${profile_id}&ordering=-likes__created_at&`}
               />
             )}
           />
