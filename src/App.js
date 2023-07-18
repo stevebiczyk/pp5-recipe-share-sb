@@ -39,11 +39,11 @@ function App() {
           />
           <Route
             exact
-            path="/liked"
+            path="/voted"
             render={() => (
               <RecipesPage
-                message="No results found. Adjust the search keyword or like a recipe."
-                filter={`likes__owner__profile=${profile_id}&ordering=-likes__created_at&`}
+                message="No results found. Adjust the search keyword or vote for a recipe."
+                filter={`votes__owner__profile=${profile_id}&ordering=-votes__created_at&`}
               />
             )}
           />

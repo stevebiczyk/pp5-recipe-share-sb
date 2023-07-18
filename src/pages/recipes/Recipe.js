@@ -14,8 +14,8 @@ const Recipe = (props) => {
     profile_id,
     profile_image,
     comments_count,
-    likes_count,
-    like_id,
+    votes_count,
+    vote_id,
     title,
     // ingredients,
     instructions,
@@ -42,17 +42,17 @@ const Recipe = (props) => {
     }
   };
 
-  const handleLike = async () => {
+  const handleVote = async () => {
     try {
-      const { data } = await axiosRes.post("/likes/", { recipe: id });
+      const { data } = await axiosRes.post("/votes/", { recipe: id });
       setRecipes((prevRecipes) => ({
         ...prevRecipes,
         results: prevRecipes.results.map((recipe) => {
           return recipe.id === id
             ? {
                 ...recipe,
-                likes_count: recipe.likes_count + 1,
-                like_id: data.id,
+                votes_count: recipe.votes_count + 1,
+                vote_id: data.id,
               }
             : recipe;
         }),
@@ -61,14 +61,14 @@ const Recipe = (props) => {
       console.log(err);
     }
   };
-  const handleUnlike = async () => {
+  const handleUnVote = async () => {
     try {
-      await axiosRes.delete(`/likes/${like_id}/`);
+      await axiosRes.delete(`/votes/${vote_id}/`);
       setRecipes((prevRecipes) => ({
         ...prevRecipes,
         results: prevRecipes.results.map((recipe) => {
           return recipe.id === id
-            ? { ...recipe, likes_count: recipe.likes_count - 1, like_id: null }
+            ? { ...recipe, votes_count: recipe.votes_count - 1, vote_id: null }
             : recipe;
         }),
       }));
@@ -107,7 +107,7 @@ const Recipe = (props) => {
             <OverlayTrigger
               placement="top"
               overlay={
-                <Tooltip>You can't like or dislike your own recipe!</Tooltip>
+                <Tooltip>You can't upvote or downvote your own recipe!</Tooltip>
               }
             >
               {/* <i className="far fa-thumbs-up" /> */}
@@ -115,28 +115,28 @@ const Recipe = (props) => {
             </OverlayTrigger>
           ) : (
             <>
-              {like_id ? (
-                <span onClick={handleUnlike}>
+              {vote_id ? (
+                <span onClick={handleUnVote}>
                   <i className={`fas fa-thumbs-down ${styles.ThumbsDown}`} />
                 </span>
               ) : (
-                <span onClick={handleLike}>
+                <span onClick={handleVote}>
                   <i className={`far fa-thumbs-up ${styles.ThumbsUp}`} />
                 </span>
               )}
               {currentUser ? (
                 <>
-                  {like_id ? (
+                  {vote_id ? (
                     <OverlayTrigger
                       placement="top"
-                      overlay={<Tooltip>Remove your dislike</Tooltip>}
+                      overlay={<Tooltip>Remove your vote</Tooltip>}
                     >
                       <i className="far fa-thumbs-down" />
                     </OverlayTrigger>
                   ) : (
                     <OverlayTrigger
                       placement="top"
-                      overlay={<Tooltip>Like this recipe</Tooltip>}
+                      overlay={<Tooltip>Vote for this recipe</Tooltip>}
                     >
                       <i className="far fa-thumbs-up" />
                     </OverlayTrigger>
@@ -145,14 +145,14 @@ const Recipe = (props) => {
               ) : (
                 <OverlayTrigger
                   placement="top"
-                  overlay={<Tooltip>Log in to like recipes!</Tooltip>}
+                  overlay={<Tooltip>Log in to vote for recipes!</Tooltip>}
                 >
                   <i className="far fa-thumbs-up" />
                 </OverlayTrigger>
               )}
             </>
           )}
-          {likes_count}
+          {votes_count}
           <Link to={`/recipes/${id}`}>
             <i className="far fa-comments" />
           </Link>

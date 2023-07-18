@@ -11,22 +11,22 @@ h5 {
   margin: 0 0;
 }
 
-.Like {
+.Vote {
   color: #f85032;
 }
 
-.Like:hover {
+.Vote:hover {
   color: #2142b2;
 }
 
-.Dislike:hover {
+.DownVote:hover {
   color: #f85032;
 }
 
-.LikeOutline:hover {
+.UpvoteOutline:hover {
   color: #f85032;
 }
 
-.DislikeOutline:hover {
+.DownVoteOutline:hover {
   color: #f85032;
 }

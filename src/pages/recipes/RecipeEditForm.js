@@ -201,10 +201,10 @@ function RecipeEditForm() {
         className={`${btnStyles.Button} ${btnStyles.Blue}`}
         onClick={() => history.goBack()}
       >
-        cancel
+        Cancel
       </Button>
       <Button className={`${btnStyles.Button} ${btnStyles.Blue}`} type="submit">
-        Edit
+        Save
       </Button>
     </div>
   );
@@ -228,32 +228,6 @@ function RecipeEditForm() {
                   Change the image
                 </Form.Label>
               </div>
-              {/* {image ? (
-                <>
-                  <figure>
-                    <Image className={appStyles.Image} src={image} rounded />
-                  </figure>
-                  <div>
-                    <Form.Label
-                      className={`${btnStyles.Button} ${btnStyles.Blue} btn`}
-                      htmlFor="image-upload"
-                    >
-                      Change the image
-                    </Form.Label>
-                  </div>
-                </>
-              ) : (
-                <Form.Label
-                  className="d-flex justify-content-center"
-                  htmlFor="image-upload"
-                >
-                  <Asset
-                    src={Upload}
-                    message="Click or tap to upload an image"
-                  />
-                </Form.Label>
-              )} */}
-
               <Form.File
                 id="image-upload"
                 accept="image/*"

@@ -8,10 +8,16 @@ import appStyles from "../../App.module.css";
 import { useParams } from "react-router";
 import { axiosReq } from "../../api/axiosDefaults";
 import Recipe from "./Recipe";
+import CommentCreateForm from "../comments/CommentCreateForm";
+import { useCurrentUser } from "../../contexts/CurrentUserContext";
 
 function RecipePage() {
   const { id } = useParams();
   const [recipe, setRecipe] = useState({ results: [] });
+
+  const currentUser = useCurrentUser();
+  const profile_avatar = currentUser?.profile_avatar;
+  const [comments, setComments] = useState({ results: [] });
 
   useEffect(() => {
     const handleMount = async () => {
@@ -34,7 +40,19 @@ function RecipePage() {
       <Col className="py-2 p-0 p-lg-2" lg={8}>
         <p>Popular profiles for mobile</p>
         <Recipe {...recipe.results[0]} setRecipes={setRecipe} recipePage />
-        <Container className={appStyles.Content}>Comments</Container>
+        <Container className={appStyles.Content}>
+          {currentUser ? (
+            <CommentCreateForm
+              profile_id={currentUser.profile_id}
+              profileAvatar={profile_avatar}
+              recipe={id}
+              setRecipe={setRecipe}
+              setComments={setComments}
+            />
+          ) : comments.results.length ? (
+            "Comments"
+          ) : null}
+        </Container>
       </Col>
       <Col lg={4} className="d-none d-lg-block p-0 p-lg-2">
         Popular profiles for desktop
