@@ -20,18 +20,6 @@ function RecipePage() {
   const profile_image = currentUser?.profile_image;
   const [comments, setComments] = useState({ results: [] });
 
-  // useEffect(() => {
-  //   const handleMount = async () => {
-  //     try {
-  //       const [{ data: recipe }] = await Promise.all([
-  //         axiosReq.get(`/recipes/${id}`),
-  //       ]);
-  //       setRecipe({ results: [recipe] });
-  //       console.log(recipe);
-  //     } catch (err) {
-  //       console.log(err);
-  //     }
-  //   };
   useEffect(() => {
     const handleMount = async () => {
       try {
@@ -68,7 +56,12 @@ function RecipePage() {
           ) : null}
           {comments.results.length ? (
             comments.results.map((comment) => (
-              <Comment key={comment.id} {...comment} />
+              <Comment
+                key={comment.id}
+                {...comment}
+                setRecipe={setRecipe}
+                setComments={setComments}
+              />
             ))
           ) : currentUser ? (
             <span>No comments yet, be the first to comment!</span>
