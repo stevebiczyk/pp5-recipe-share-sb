@@ -10,23 +10,37 @@ import { axiosReq } from "../../api/axiosDefaults";
 import Recipe from "./Recipe";
 import CommentCreateForm from "../comments/CommentCreateForm";
 import { useCurrentUser } from "../../contexts/CurrentUserContext";
+import Comment from "../comments/Comment";
 
 function RecipePage() {
   const { id } = useParams();
   const [recipe, setRecipe] = useState({ results: [] });
 
   const currentUser = useCurrentUser();
-  const profile_avatar = currentUser?.profile_avatar;
+  const profile_image = currentUser?.profile_image;
   const [comments, setComments] = useState({ results: [] });
 
+  // useEffect(() => {
+  //   const handleMount = async () => {
+  //     try {
+  //       const [{ data: recipe }] = await Promise.all([
+  //         axiosReq.get(`/recipes/${id}`),
+  //       ]);
+  //       setRecipe({ results: [recipe] });
+  //       console.log(recipe);
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   };
   useEffect(() => {
     const handleMount = async () => {
       try {
-        const [{ data: recipe }] = await Promise.all([
+        const [{ data: recipe }, { data: comments }] = await Promise.all([
           axiosReq.get(`/recipes/${id}`),
+          axiosReq.get(`/comments/?recipe=${id}`),
         ]);
         setRecipe({ results: [recipe] });
-        console.log(recipe);
+        setComments(comments);
       } catch (err) {
         console.log(err);
       }
@@ -44,7 +58,7 @@ function RecipePage() {
           {currentUser ? (
             <CommentCreateForm
               profile_id={currentUser.profile_id}
-              profileAvatar={profile_avatar}
+              profileAvatar={profile_image}
               recipe={id}
               setRecipe={setRecipe}
               setComments={setComments}
@@ -52,6 +66,15 @@ function RecipePage() {
           ) : comments.results.length ? (
             "Comments"
           ) : null}
+          {comments.results.length ? (
+            comments.results.map((comment) => (
+              <Comment key={comment.id} {...comment} />
+            ))
+          ) : currentUser ? (
+            <span>No comments yet, be the first to comment!</span>
+          ) : (
+            <span>No comments... yet</span>
+          )}
         </Container>
       </Col>
       <Col lg={4} className="d-none d-lg-block p-0 p-lg-2">
