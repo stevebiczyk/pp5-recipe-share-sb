@@ -14,11 +14,13 @@ import btnStyles from "../../styles/Button.module.css";
 import Asset from "../../components/Asset";
 import Alert from "react-bootstrap/Alert";
 import { Image } from "react-bootstrap";
-import { useHistory } from "react-router-dom";
+import { useHistory } from "react-router";
 // import { useHistory } from "react-router";
 import { axiosReq } from "../../api/axiosDefaults";
+import { useRedirect } from "../../hooks/useRedirect";
 
 function RecipeCreateForm() {
+  useRedirect("loggedOut");
   const [errors, setErrors] = useState({});
 
   const [recipeData, setRecipeData] = useState({

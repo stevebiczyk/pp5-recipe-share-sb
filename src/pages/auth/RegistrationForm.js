@@ -5,6 +5,7 @@ import styles from "../../styles/RegisterLogInForm.module.css";
 import btnStyles from "../../styles/Button.module.css";
 import appStyles from "../../App.module.css";
 import axios from "axios";
+import { useRedirect } from "../../hooks/useRedirect";
 
 import {
   Form,
@@ -17,6 +18,7 @@ import {
 } from "react-bootstrap";
 
 const RegistrationForm = () => {
+  useRedirect("loggedIn");
   const [registrationData, setRegistrationData] = useState({
     username: "",
     password1: "",
@@ -29,15 +31,15 @@ const RegistrationForm = () => {
 
   const history = useHistory();
 
-  const handleChange = (e) => {
+  const handleChange = (event) => {
     setRegistrationData({
       ...registrationData,
-      [e.target.name]: e.target.value,
+      [event.target.name]: event.target.value,
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     try {
       await axios.post("/dj-rest-auth/registration/", registrationData);
       history.push("/signin");

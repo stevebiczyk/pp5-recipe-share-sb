@@ -15,9 +15,12 @@ import styles from "../../styles/RegisterLogInForm.module.css";
 import btnStyles from "../../styles/Button.module.css";
 import appStyles from "../../App.module.css";
 import { useSetCurrentUser } from "../../contexts/CurrentUserContext";
+import { useRedirect } from "../../hooks/useRedirect";
 
 function LogInForm() {
   const setCurrentUser = useSetCurrentUser();
+  useRedirect("loggedIn");
+
   const [LogInData, setLogInData] = useState({
     username: "",
     password: "",
@@ -32,7 +35,8 @@ function LogInForm() {
     try {
       const { data } = await axios.post("/dj-rest-auth/login/", LogInData);
       setCurrentUser(data.user);
-      history.push("/");
+      history.goBack();
+      // history.push("/");
     } catch (err) {
       setErrors(err.response?.data);
     }
@@ -84,7 +88,10 @@ function LogInForm() {
               </Alert>
             ))}
 
-            <Button className={`${btnStyles.Button}`} type="submit">
+            <Button
+              className={`${btnStyles.Button}${btnStyles.Wide} ${btnStyles.Bright}`}
+              type="submit"
+            >
               Log In
             </Button>
             {errors.non_field_errors?.map((message, idx) => (
