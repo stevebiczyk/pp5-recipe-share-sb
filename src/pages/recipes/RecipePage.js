@@ -11,6 +11,7 @@ import Recipe from "./Recipe";
 import CommentCreateForm from "../comments/CommentCreateForm";
 import { useCurrentUser } from "../../contexts/CurrentUserContext";
 import Comment from "../comments/Comment";
+import PopularProfiles from "../profiles/PopularProfiles";
 
 import InfiniteScroll from "react-infinite-scroll-component";
 import Asset from "../../components/Asset";
@@ -44,7 +45,7 @@ function RecipePage() {
   return (
     <Row className="h-100">
       <Col className="py-2 p-0 p-lg-2" lg={8}>
-        <p>Popular profiles for mobile</p>
+        <PopularProfiles mobile />
         <Recipe {...recipe.results[0]} setRecipes={setRecipe} recipePage />
         <Container className={appStyles.Content}>
           {currentUser ? (
@@ -81,7 +82,7 @@ function RecipePage() {
         </Container>
       </Col>
       <Col lg={4} className="d-none d-lg-block p-0 p-lg-2">
-        Popular profiles for desktop
+        <PopularProfiles />
       </Col>
     </Row>
   );
