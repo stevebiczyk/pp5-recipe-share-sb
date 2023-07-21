@@ -7,15 +7,13 @@ import appStyles from "../../App.module.css";
 import axios from "axios";
 import { useRedirect } from "../../hooks/useRedirect";
 
-import {
-  Form,
-  Button,
-  Image,
-  Col,
-  Row,
-  Container,
-  Alert,
-} from "react-bootstrap";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import Col from "react-bootstrap/Col";
+import Image from "react-bootstrap/Image";
+import Container from "react-bootstrap/Container";
+import Row from "react-bootstrap/Row";
+import Alert from "react-bootstrap/Alert";
 
 const RegistrationForm = () => {
   useRedirect("loggedIn");
