@@ -15,14 +15,12 @@ const Recipe = (props) => {
     id,
     owner,
     profile_id,
-    profile_image,
+    profile_avatar,
     comments_count,
     votes_count,
     vote_id,
     title,
-    // ingredients,
     instructions,
-    // difficulty_level,
     image,
     updated_at,
     recipePage,
@@ -64,6 +62,7 @@ const Recipe = (props) => {
       console.log(err);
     }
   };
+
   const handleUnVote = async () => {
     try {
       await axiosRes.delete(`/votes/${vote_id}/`);
@@ -80,12 +79,32 @@ const Recipe = (props) => {
     }
   };
 
+  const handleDownVote = async () => {
+    try {
+      const { data } = await axiosRes.post("/votes/downvote/", { recipe: id });
+      setRecipes((prevRecipes) => ({
+        ...prevRecipes,
+        results: prevRecipes.results.map((recipe) => {
+          return recipe.id === id
+            ? {
+                ...recipe,
+                votes_count: recipe.votes_count - 1,
+                vote_id: data.id,
+              }
+            : recipe;
+        }),
+      }));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <Card className={styles.Recipe}>
       <Card.Body>
         <Media className="align-items-center justify-content-between">
           <Link to={`/profiles/${profile_id}`}>
-            <Avatar src={profile_image} height={55} />
+            <Avatar src={profile_avatar} height={55} />
             {owner}
           </Link>
           <div className="d-flex align-items-center">
@@ -132,7 +151,7 @@ const Recipe = (props) => {
                   {vote_id ? (
                     <OverlayTrigger
                       placement="top"
-                      overlay={<Tooltip>Remove your vote</Tooltip>}
+                      overlay={<Tooltip>Remove your upvote</Tooltip>}
                     >
                       <i className="far fa-thumbs-down" />
                     </OverlayTrigger>
@@ -142,6 +161,28 @@ const Recipe = (props) => {
                       overlay={<Tooltip>Vote for this recipe</Tooltip>}
                     >
                       <i className="far fa-thumbs-up" />
+                    </OverlayTrigger>
+                  )}
+                  {/* Add the downvote functionality */}
+                  {vote_id ? (
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip>Remove your downvote</Tooltip>}
+                    >
+                      <i
+                        className="fas fa-thumbs-down"
+                        onClick={handleDownVote}
+                      />
+                    </OverlayTrigger>
+                  ) : (
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip>Downvote this recipe</Tooltip>}
+                    >
+                      <i
+                        className="fas fa-thumbs-down"
+                        onClick={handleDownVote}
+                      />
                     </OverlayTrigger>
                   )}
                 </>

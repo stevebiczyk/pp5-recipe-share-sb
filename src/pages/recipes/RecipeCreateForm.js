@@ -137,6 +137,8 @@ function RecipeCreateForm() {
           type="number"
           name="cooking_time"
           value={cooking_time}
+          min="0" // Min attribute to prevent the user from entering negative values
+          required
           onChange={handleChange}
         />
       </Form.Group>

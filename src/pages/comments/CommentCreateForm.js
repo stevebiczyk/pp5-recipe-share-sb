@@ -9,7 +9,7 @@ import Avatar from "../../components/Avatar";
 import { axiosRes } from "../../api/axiosDefaults";
 
 function CommentCreateForm(props) {
-  const { recipe, setRecipe, setComments, profile_image, profile_id } = props;
+  const { recipe, setRecipe, setComments, profile_avatar, profile_id } = props;
   const [content, setContent] = useState("");
 
   const handleChange = (event) => {
@@ -46,7 +46,7 @@ function CommentCreateForm(props) {
       <Form.Group>
         <InputGroup>
           <Link to={`/profiles/${profile_id}`}>
-            <Avatar src={profile_image} />
+            <Avatar src={profile_avatar} />
           </Link>
           <Form.Control
             className={styles.Form}
