@@ -9,7 +9,7 @@ import Row from "react-bootstrap/Row";
 import Image from "react-bootstrap/Image";
 import Container from "react-bootstrap/Container";
 
-import { Link, useHistory } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import styles from "../../styles/RegisterLogInForm.module.css";
 import btnStyles from "../../styles/Button.module.css";
@@ -30,15 +30,15 @@ function LogInForm() {
 
   const [errors, setErrors] = useState({});
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
       const { data } = await axios.post("/dj-rest-auth/login/", LogInData);
       setCurrentUser(data.user);
-      setTokenTimestamp(data)
-      history.goBack();
-      // history.push("/");
+      setTokenTimestamp(data);
+      navigate(-1);
+      // navigate("/");
     } catch (err) {
       setErrors(err.response?.data);
     }

@@ -1,7 +1,7 @@
 import styles from "./App.module.css";
 import NavBar from "./components/NavBar";
 import Container from "react-bootstrap/Container";
-import { Route, Switch } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import "./api/axiosDefaults";
 import RegistrationForm from "./pages/auth/RegistrationForm";
 import LogInForm from "./pages/auth/LogInForm";
@@ -24,66 +24,48 @@ function App() {
     <div className={styles.App}>
       <NavBar />
       <Container className={styles.Main}>
-        <Switch>
+        <Routes>
           <Route
-            exact
             path="/"
-            render={() => (
+            element={
               <RecipesPage message="No results found. Adjust the search keyword." />
-            )}
+            }
           />
           <Route
-            exact
             path="/feed"
-            render={() => (
+            element={
               <RecipesPage
                 message="No results found. Adjust the search keyword or follow a user."
                 filter={`owner__followed__owner__profile=${profile_id}&`}
               />
-            )}
+            }
           />
           <Route
-            exact
             path="/voted"
-            render={() => (
+            element={
               <RecipesPage
                 message="No results found. Adjust the search keyword or vote for a recipe."
                 filter={`votes__owner__profile=${profile_id}&ordering=-votes__created_at&`}
               />
-            )}
+            }
           />
-          <Route exact path="/login" render={() => <LogInForm />} />
-          <Route exact path="/register" render={() => <RegistrationForm />} />
+          <Route path="/login" element={<LogInForm />} />
+          <Route path="/register" element={<RegistrationForm />} />
+          <Route path="/recipes/create" element={<RecipeCreateForm />} />
+          <Route path="/recipes/:id" element={<RecipePage />} />
+          <Route path="/recipes/:id/edit" element={<RecipeEditForm />} />
+          <Route path="/profiles/:id" element={<ProfilePage />} />
           <Route
-            exact
-            path="/recipes/create"
-            render={() => <RecipeCreateForm />}
-          />
-          <Route exact path="/recipes/:id" render={() => <RecipePage />} />
-          <Route
-            exact
-            path="/recipes/:id/edit"
-            render={() => <RecipeEditForm />}
-          />
-          <Route exact path="/profiles/:id" render={() => <ProfilePage />} />
-          <Route
-            exact
             path="/profiles/:id/edit/username"
-            render={() => <UsernameForm />}
+            element={<UsernameForm />}
           />
           <Route
-            exact
             path="/profiles/:id/edit/password"
-            render={() => <UserPasswordForm />}
+            element={<UserPasswordForm />}
           />
-          <Route
-            exact
-            path="/profiles/:id/edit"
-            render={() => <ProfileEditForm />}
-          />
-          {/* <Route render={() => <p>Page not found!</p>} /> */}
-          <Route render={() => <NotFound />} />
-        </Switch>
+          <Route path="/profiles/:id/edit" element={<ProfileEditForm />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </Container>
     </div>
   );

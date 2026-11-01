@@ -2,10 +2,9 @@ import React from "react";
 import styles from "../../styles/Recipe.module.css";
 import { useCurrentUser } from "../../contexts/CurrentUserContext";
 import Card from "react-bootstrap/Card";
-import Media from "react-bootstrap/Media";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import Tooltip from "react-bootstrap/Tooltip";
-import { Link, useHistory } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Avatar from "../../components/Avatar";
 import { axiosRes } from "../../api/axiosDefaults";
 import { MoreDropdown } from "../../components/MoreDropdown";
@@ -35,16 +34,16 @@ const Recipe = (props) => {
 
   const currentUser = useCurrentUser();
   const is_owner = currentUser?.username === owner;
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleEdit = () => {
-    history.push(`/recipes/${id}/edit`);
+    navigate(`/recipes/${id}/edit`);
   };
 
   const handleDelete = async () => {
     try {
       await axiosRes.delete(`/recipes/${id}/`);
-      history.goBack();
+      navigate(-1);
     } catch (err) {
       console.log(err);
     }
@@ -131,7 +130,7 @@ const Recipe = (props) => {
   return (
     <Card className={styles.Recipe}>
       <Card.Body>
-        <Media className="align-items-center justify-content-between">
+        <div className="d-flex align-items-center justify-content-between">
           <Link to={`/profiles/${profile_id}`}>
             <Avatar src={avatarSrc} height={55} />
             {owner}
@@ -145,7 +144,7 @@ const Recipe = (props) => {
               />
             )}
           </div>
-        </Media>
+        </div>
       </Card.Body>
       <Link to={`/recipes/${id}`}>
         <Card.Img src={image} alt={title} />

@@ -14,7 +14,7 @@ import btnStyles from "../../styles/Button.module.css";
 import Asset from "../../components/Asset";
 import Alert from "react-bootstrap/Alert";
 import Image from "react-bootstrap/Image";
-import { useHistory } from "react-router";
+import { useNavigate } from "react-router-dom";
 import { axiosReq } from "../../api/axiosDefaults";
 import { useRedirect } from "../../hooks/useRedirect";
 
@@ -43,7 +43,7 @@ function RecipeCreateForm() {
 
   const imageInput = useRef(null);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleChange = (event) => {
     setRecipeData({
@@ -78,7 +78,7 @@ function RecipeCreateForm() {
 
     try {
       const { data } = await axiosReq.post("/recipes/", formData);
-      history.push(`/recipes/${data.id}`);
+      navigate(`/recipes/${data.id}`);
     } catch (err) {
       console.log(err);
       if (err.response?.status !== 401) {
@@ -197,7 +197,7 @@ function RecipeCreateForm() {
 
       <Button
         className={`${btnStyles.Button} ${btnStyles.Blue}`}
-        onClick={() => history.goBack()}
+        onClick={() => navigate(-1)}
       >
         cancel
       </Button>
@@ -241,7 +241,8 @@ function RecipeCreateForm() {
                 </Form.Label>
               )}
 
-              <Form.File
+              <Form.Control
+                type="file"
                 id="image-upload"
                 accept="image/*"
                 onChange={handleChangeImage}
