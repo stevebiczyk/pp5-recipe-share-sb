@@ -16,11 +16,17 @@ const Recipe = (props) => {
     owner,
     profile_id,
     profile_avatar,
+    profile_image,
     comments_count,
     votes_count,
     vote_id,
+    vote_type,
     title,
+    ingredients,
     instructions,
+    cooking_time,
+    difficulty_level,
+    category,
     image,
     updated_at,
     recipePage,
@@ -34,6 +40,7 @@ const Recipe = (props) => {
   const handleEdit = () => {
     history.push(`/recipes/${id}/edit`);
   };
+
   const handleDelete = async () => {
     try {
       await axiosRes.delete(`/recipes/${id}/`);
@@ -43,35 +50,24 @@ const Recipe = (props) => {
     }
   };
 
-  const handleVote = async () => {
+  const handleVote = async (type = "upvote") => {
     try {
-      const { data } = await axiosRes.post("/votes/", { recipe: id });
+      const { data } = await axiosRes.post("/votes/", {
+        recipe: id,
+        vote_type: type,
+      });
       setRecipes((prevRecipes) => ({
         ...prevRecipes,
         results: prevRecipes.results.map((recipe) => {
-          return recipe.id === id
-            ? {
-                ...recipe,
-                votes_count: recipe.votes_count + 1,
-                vote_id: data.id,
-              }
-            : recipe;
-        }),
-      }));
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const handleUnVote = async () => {
-    try {
-      await axiosRes.delete(`/votes/${vote_id}/`);
-      setRecipes((prevRecipes) => ({
-        ...prevRecipes,
-        results: prevRecipes.results.map((recipe) => {
-          return recipe.id === id
-            ? { ...recipe, votes_count: recipe.votes_count - 1, vote_id: null }
-            : recipe;
+          if (recipe.id !== id) return recipe;
+          const wasUpvoted = recipe.vote_id && recipe.vote_type !== "downvote";
+          const countDiff = wasUpvoted ? 0 : 1;
+          return {
+            ...recipe,
+            votes_count: (recipe.votes_count || 0) + countDiff,
+            vote_id: data.id,
+            vote_type: type,
+          };
         }),
       }));
     } catch (err) {
@@ -85,13 +81,12 @@ const Recipe = (props) => {
       setRecipes((prevRecipes) => ({
         ...prevRecipes,
         results: prevRecipes.results.map((recipe) => {
-          return recipe.id === id
-            ? {
-                ...recipe,
-                votes_count: recipe.votes_count - 1,
-                vote_id: data.id,
-              }
-            : recipe;
+          if (recipe.id !== id) return recipe;
+          return {
+            ...recipe,
+            vote_id: data.id,
+            vote_type: "downvote",
+          };
         }),
       }));
     } catch (err) {
@@ -99,12 +94,46 @@ const Recipe = (props) => {
     }
   };
 
+  const handleUnVote = async () => {
+    try {
+      await axiosRes.delete(`/votes/${vote_id}/`);
+      setRecipes((prevRecipes) => ({
+        ...prevRecipes,
+        results: prevRecipes.results.map((recipe) => {
+          if (recipe.id !== id) return recipe;
+          const wasUpvoted = recipe.vote_type !== "downvote";
+          return {
+            ...recipe,
+            votes_count: wasUpvoted
+              ? Math.max(0, (recipe.votes_count || 0) - 1)
+              : recipe.votes_count,
+            vote_id: null,
+            vote_type: null,
+          };
+        }),
+      }));
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const isUpvoted = vote_id && (vote_type === "upvote" || !vote_type);
+  const isDownvoted = vote_id && vote_type === "downvote";
+  const avatarSrc = profile_avatar || profile_image;
+
+  const ingredientsList = ingredients
+    ? ingredients
+        .split(/\r?\n|;/)
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+
   return (
     <Card className={styles.Recipe}>
       <Card.Body>
         <Media className="align-items-center justify-content-between">
           <Link to={`/profiles/${profile_id}`}>
-            <Avatar src={profile_avatar} height={55} />
+            <Avatar src={avatarSrc} height={55} />
             {owner}
           </Link>
           <div className="d-flex align-items-center">
@@ -123,84 +152,133 @@ const Recipe = (props) => {
       </Link>
       <Card.Body>
         {title && <Card.Title className="text-center">{title}</Card.Title>}
-        {instructions && <Card.Text>{instructions}</Card.Text>}
+
+        {/* Recipe Meta Badges */}
+        <div className={styles.RecipeMeta}>
+          {cooking_time && (
+            <span className={styles.Badge}>
+              <i className="far fa-clock mr-1" />
+              {cooking_time} mins
+            </span>
+          )}
+          {difficulty_level && (
+            <span className={styles.Badge}>
+              <i className="fas fa-layer-group mr-1" />
+              {difficulty_level}
+            </span>
+          )}
+          {category && (
+            <span className={styles.Badge}>
+              <i className="fas fa-utensils mr-1" />
+              {category}
+            </span>
+          )}
+        </div>
+
+        {/* Recipe Page Details: Ingredients and Instructions */}
+        {recipePage && (
+          <>
+            {ingredientsList.length > 0 && (
+              <div className={styles.Section}>
+                <h5 className={styles.SectionTitle}>Ingredients</h5>
+                <ul className={styles.IngredientsList}>
+                  {ingredientsList.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {instructions && (
+              <div className={styles.Section}>
+                <h5 className={styles.SectionTitle}>Instructions</h5>
+                <p className={styles.InstructionsText}>{instructions}</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Recipe summary on feed/card view */}
+        {!recipePage && instructions && (
+          <Card.Text className="text-muted mt-2">
+            {instructions.length > 120
+              ? `${instructions.substring(0, 120)}...`
+              : instructions}
+          </Card.Text>
+        )}
+
+        {/* Interaction Bar: Voting and Comments */}
         <div className={styles.RecipeBar}>
           {is_owner ? (
             <OverlayTrigger
               placement="top"
-              overlay={
-                <Tooltip>You can't upvote or downvote your own recipe!</Tooltip>
-              }
+              overlay={<Tooltip>You can't vote on your own recipe!</Tooltip>}
             >
-              {/* <i className="far fa-thumbs-up" /> */}
-              <i className="far fa-thumbs-down" />
+              <span>
+                <i className="far fa-thumbs-up" />
+              </span>
             </OverlayTrigger>
-          ) : (
-            <>
-              {vote_id ? (
-                <span onClick={handleUnVote}>
-                  <i className={`fas fa-thumbs-down ${styles.ThumbsDown}`} />
-                </span>
-              ) : (
-                <span onClick={handleVote}>
-                  <i className={`far fa-thumbs-up ${styles.ThumbsUp}`} />
-                </span>
-              )}
-              {currentUser ? (
-                <>
-                  {vote_id ? (
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip>Remove your upvote</Tooltip>}
-                    >
-                      <i className="far fa-thumbs-down" />
-                    </OverlayTrigger>
-                  ) : (
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip>Vote for this recipe</Tooltip>}
-                    >
-                      <i className="far fa-thumbs-up" />
-                    </OverlayTrigger>
-                  )}
-                  {/* Add the downvote functionality */}
-                  {vote_id ? (
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip>Remove your downvote</Tooltip>}
-                    >
-                      <i
-                        className="fas fa-thumbs-down"
-                        onClick={handleDownVote}
-                      />
-                    </OverlayTrigger>
-                  ) : (
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip>Downvote this recipe</Tooltip>}
-                    >
-                      <i
-                        className="fas fa-thumbs-down"
-                        onClick={handleDownVote}
-                      />
-                    </OverlayTrigger>
-                  )}
-                </>
-              ) : (
-                <OverlayTrigger
-                  placement="top"
-                  overlay={<Tooltip>Log in to vote for recipes!</Tooltip>}
+          ) : currentUser ? (
+            <div className="d-flex align-items-center">
+              {/* Upvote */}
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip>
+                    {isUpvoted ? "Remove upvote" : "Upvote this recipe"}
+                  </Tooltip>
+                }
+              >
+                <span
+                  onClick={isUpvoted ? handleUnVote : () => handleVote("upvote")}
+                  style={{ cursor: "pointer" }}
                 >
-                  <i className="far fa-thumbs-up" />
-                </OverlayTrigger>
-              )}
-            </>
+                  <i
+                    className={`${
+                      isUpvoted ? "fas" : "far"
+                    } fa-thumbs-up ${styles.Vote} mr-2`}
+                  />
+                </span>
+              </OverlayTrigger>
+
+              {/* Downvote */}
+              <OverlayTrigger
+                placement="top"
+                overlay={
+                  <Tooltip>
+                    {isDownvoted ? "Remove downvote" : "Downvote this recipe"}
+                  </Tooltip>
+                }
+              >
+                <span
+                  onClick={isDownvoted ? handleUnVote : handleDownVote}
+                  style={{ cursor: "pointer" }}
+                >
+                  <i
+                    className={`${
+                      isDownvoted ? "fas" : "far"
+                    } fa-thumbs-down ${styles.Vote}`}
+                  />
+                </span>
+              </OverlayTrigger>
+            </div>
+          ) : (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip>Log in to vote for recipes!</Tooltip>}
+            >
+              <span>
+                <i className="far fa-thumbs-up mr-2" />
+                <i className="far fa-thumbs-down" />
+              </span>
+            </OverlayTrigger>
           )}
-          {votes_count}
-          <Link to={`/recipes/${id}`}>
-            <i className="far fa-comments" />
+
+          <span className="font-weight-bold ml-1">{votes_count || 0}</span>
+
+          <Link to={`/recipes/${id}`} className="ml-3">
+            <i className="far fa-comments mr-1" />
+            {comments_count || 0}
           </Link>
-          {comments_count}
         </div>
       </Card.Body>
     </Card>

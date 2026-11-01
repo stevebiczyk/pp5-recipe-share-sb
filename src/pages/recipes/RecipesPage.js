@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Container from "react-bootstrap/Container";
@@ -26,12 +27,27 @@ function RecipesPage({ message, filter = "" }) {
   const currentUser = useCurrentUser();
 
   const [query, setQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  const categories = [
+    "All",
+    "Vegetarian",
+    "Vegan",
+    "Dairy-free",
+    "Gluten-free",
+    "Healthy Meals",
+    "Quick and Easy",
+  ];
 
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
+        const categoryFilter =
+          selectedCategory && selectedCategory !== "All"
+            ? `category=${encodeURIComponent(selectedCategory)}&`
+            : "";
         const { data } = await axiosReq.get(
-          `/recipes/?${filter}search=${query}`
+          `/recipes/?${filter}${categoryFilter}search=${query}`
         );
         setRecipes(data);
         setHasLoaded(true);
@@ -47,7 +63,7 @@ function RecipesPage({ message, filter = "" }) {
     return () => {
       clearTimeout(timer);
     };
-  }, [filter, query, pathname, currentUser]);
+  }, [filter, query, selectedCategory, pathname, currentUser]);
 
   return (
     <Row className="h-100">
@@ -66,6 +82,29 @@ function RecipesPage({ message, filter = "" }) {
             placeholder="Search recipes"
           />
         </Form>
+
+        {/* Category Filter Pills */}
+        <div
+          className="d-flex flex-wrap justify-content-center my-3"
+          style={{ gap: "6px" }}
+        >
+          {categories.map((cat) => (
+            <Button
+              key={cat}
+              size="sm"
+              variant={
+                (cat === "All" && !selectedCategory) ||
+                selectedCategory === cat
+                  ? "primary"
+                  : "outline-secondary"
+              }
+              className="rounded-pill px-3"
+              onClick={() => setSelectedCategory(cat === "All" ? "" : cat)}
+            >
+              {cat}
+            </Button>
+          ))}
+        </div>
         {hasLoaded ? (
           <>
             {recipes.results.length ? (

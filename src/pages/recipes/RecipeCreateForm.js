@@ -29,6 +29,7 @@ function RecipeCreateForm() {
     cooking_time: "",
     image: "",
     difficulty_level: "",
+    category: "",
   });
   const {
     title,
@@ -37,6 +38,7 @@ function RecipeCreateForm() {
     cooking_time,
     image,
     difficulty_level,
+    category,
   } = recipeData;
 
   const imageInput = useRef(null);
@@ -68,8 +70,11 @@ function RecipeCreateForm() {
     formData.append("ingredients", ingredients);
     formData.append("instructions", instructions);
     formData.append("cooking_time", cooking_time);
-    formData.append("image", imageInput.current.files[0]);
+    if (imageInput?.current?.files?.[0]) {
+      formData.append("image", imageInput.current.files[0]);
+    }
     formData.append("difficulty_level", difficulty_level);
+    formData.append("category", category);
 
     try {
       const { data } = await axiosReq.post("/recipes/", formData);
@@ -162,6 +167,29 @@ function RecipeCreateForm() {
         </Form.Control>
       </Form.Group>
       {errors?.difficulty_level?.map((message, idx) => (
+        <Alert variant="warning" key={idx}>
+          {message}
+        </Alert>
+      ))}
+
+      <Form.Group>
+        <Form.Label>Category</Form.Label>
+        <Form.Control
+          as="select"
+          name="category"
+          value={category}
+          onChange={handleChange}
+        >
+          <option value="">Select Category</option>
+          <option value="Vegetarian">Vegetarian</option>
+          <option value="Vegan">Vegan</option>
+          <option value="Dairy-free">Dairy-free</option>
+          <option value="Gluten-free">Gluten-free</option>
+          <option value="Healthy Meals">Healthy Meals</option>
+          <option value="Quick and Easy">Quick and Easy</option>
+        </Form.Control>
+      </Form.Group>
+      {errors?.category?.map((message, idx) => (
         <Alert variant="warning" key={idx}>
           {message}
         </Alert>

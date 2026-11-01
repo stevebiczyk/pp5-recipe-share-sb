@@ -75,6 +75,7 @@ const ProfileEditForm = () => {
       setCurrentUser((currentUser) => ({
         ...currentUser,
         profile_avatar: data.avatar,
+        profile_image: data.avatar,
       }));
       history.goBack();
     } catch (err) {

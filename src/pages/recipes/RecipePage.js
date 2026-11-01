@@ -22,7 +22,7 @@ function RecipePage() {
   const [recipe, setRecipe] = useState({ results: [] });
 
   const currentUser = useCurrentUser();
-  const profile_avatar = currentUser?.profile_avatar;
+  const profile_avatar = currentUser?.profile_avatar || currentUser?.profile_image;
   const [comments, setComments] = useState({ results: [] });
 
   useEffect(() => {
@@ -51,6 +51,7 @@ function RecipePage() {
           {currentUser ? (
             <CommentCreateForm
               profile_id={currentUser.profile_id}
+              profile_avatar={profile_avatar}
               profileAvatar={profile_avatar}
               recipe={id}
               setRecipe={setRecipe}

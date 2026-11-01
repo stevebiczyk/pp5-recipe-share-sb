@@ -40,7 +40,7 @@ const RegistrationForm = () => {
     event.preventDefault();
     try {
       await axios.post("/dj-rest-auth/registration/", registrationData);
-      history.push("/signin");
+      history.push("/login");
     } catch (err) {
       setErrors(err.response?.data);
     }
