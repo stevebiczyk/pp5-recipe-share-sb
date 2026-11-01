@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { api } from "../../api/axiosDefaults";
 
 import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
@@ -16,7 +16,6 @@ import btnStyles from "../../styles/Button.module.css";
 import appStyles from "../../App.module.css";
 import { useSetCurrentUser } from "../../contexts/CurrentUserContext";
 import { useRedirect } from "../../hooks/useRedirect";
-import { setTokenTimestamp } from "../../utils/utils";
 
 function LogInForm() {
   const setCurrentUser = useSetCurrentUser();
@@ -34,9 +33,8 @@ function LogInForm() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const { data } = await axios.post("/dj-rest-auth/login/", LogInData);
+      const { data } = await api.post("/dj-rest-auth/login/", LogInData);
       setCurrentUser(data.user);
-      setTokenTimestamp(data);
       navigate(-1);
       // navigate("/");
     } catch (err) {

@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import styles from "../../styles/RegisterLogInForm.module.css";
 import btnStyles from "../../styles/Button.module.css";
 import appStyles from "../../App.module.css";
-import axios from "axios";
+import { api } from "../../api/axiosDefaults";
 import { useRedirect } from "../../hooks/useRedirect";
 
 import Form from "react-bootstrap/Form";
@@ -39,7 +39,7 @@ const RegistrationForm = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      await axios.post("/dj-rest-auth/registration/", registrationData);
+      await api.post("/dj-rest-auth/registration/", registrationData);
       navigate("/login");
     } catch (err) {
       setErrors(err.response?.data);
@@ -117,7 +117,7 @@ const RegistrationForm = () => {
           </Form>
         </Container>
         <Container className={`mt-3 ${appStyles.Content}`}>
-          <Link className={styles.Link} to="/signin">
+          <Link className={styles.Link} to="/login">
             Already have an account? <span>Log in</span>
           </Link>
         </Container>
