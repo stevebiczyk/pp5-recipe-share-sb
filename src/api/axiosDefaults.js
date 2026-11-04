@@ -1,23 +1,26 @@
 import axios from "axios";
 
-// const isLocalhost =
-//   typeof window !== "undefined" &&
-//   (window.location.hostname === "localhost" ||
-//     window.location.hostname === "127.0.0.1");
+const apiUrl = import.meta.env.VITE_API_URL;
 
-const apiBaseURL = import.meta.env.VITE_API_URL;
-
-if (!apiBaseURL) {
-  throw new Error("Missing VITE_API_URL environment variable");
+if (!apiUrl) {
+  throw new Error(
+    "VITE_API_URL is missing. Check your environment configuration.",
+  );
 }
 
 const apiConfig = {
-  baseURL: apiBaseURL.replace(/\/+$/, "") + "/",
+  baseURL: `${apiUrl.replace(/\/+$/, "")}/`,
   withCredentials: true,
+  xsrfCookieName: "csrftoken",
+  xsrfHeaderName: "X-CSRFToken",
+  withXSRFToken: true,
 };
 
-const api = axios.create(apiConfig);
-const axiosReq = axios.create(apiConfig);
-const axiosRes = axios.create(apiConfig);
+axios.defaults.baseURL = apiConfig.baseURL;
+axios.defaults.withCredentials = true;
+axios.defaults.xsrfCookieName = apiConfig.xsrfCookieName;
+axios.defaults.xsrfHeaderName = apiConfig.xsrfHeaderName;
+axios.defaults.withXSRFToken = true;
 
-export { api, axiosReq, axiosRes };
+export const axiosReq = axios.create(apiConfig);
+export const axiosRes = axios.create(apiConfig);
