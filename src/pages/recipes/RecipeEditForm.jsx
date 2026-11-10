@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
@@ -6,21 +6,27 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 
-import Upload from "../../assets/upload.png";
-
 import styles from "../../styles/RecipeCreateEditForm.module.css";
 import appStyles from "../../App.module.css";
 import btnStyles from "../../styles/Button.module.css";
-import Asset from "../../components/Asset";
 import Alert from "react-bootstrap/Alert";
 import Image from "react-bootstrap/Image";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { axiosReq } from "../../api/axiosDefaults";
+import { formErrors } from "../../utils/errors";
+import { useAuthLoading, useCurrentUser } from "../../contexts/CurrentUserContext";
 import { useRedirect } from "../../hooks/useRedirect";
+import Asset from "../../components/Asset";
+import LoadError from "../../components/LoadError";
 
-function RecipeCreateForm() {
+function RecipeEditForm() {
   useRedirect("loggedOut");
+  const authLoading = useAuthLoading();
+  const currentUser = useCurrentUser();
   const [errors, setErrors] = useState({});
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   const [recipeData, setRecipeData] = useState({
     title: "",
@@ -42,8 +48,55 @@ function RecipeCreateForm() {
   } = recipeData;
 
   const imageInput = useRef(null);
-
   const navigate = useNavigate();
+  const { id } = useParams();
+
+  useEffect(() => {
+    if (authLoading || !currentUser) return;
+    const controller = new AbortController();
+    let active = true;
+    setHasLoaded(false);
+    setLoadError("");
+    const handleMount = async () => {
+      try {
+        const { data } = await axiosReq.get(`/recipes/${id}/`, { signal: controller.signal });
+        if (!active) return;
+        const {
+          title,
+          ingredients,
+          instructions,
+          cooking_time,
+          image,
+          difficulty_level,
+          category,
+          is_owner,
+        } = data;
+
+        is_owner
+          ? setRecipeData({
+              title,
+              ingredients,
+              instructions,
+              cooking_time: cooking_time ?? "",
+              image: image || "",
+              difficulty_level: difficulty_level || "",
+              category: category || "",
+            })
+          : navigate("/", { replace: true });
+      } catch (err) {
+        if (active) setLoadError(err.response?.status === 404 ? "Recipe not found." : "Could not load this recipe. Please try again.");
+      } finally {
+        if (active) setHasLoaded(true);
+      }
+    };
+
+    handleMount();
+    return () => { active = false; controller.abort(); };
+  }, [authLoading, currentUser, navigate, id, retry]);
+
+  useEffect(() => () => {
+    if (image?.startsWith("blob:")) URL.revokeObjectURL(image);
+  }, [image]);
 
   const handleChange = (event) => {
     setRecipeData({
@@ -70,19 +123,20 @@ function RecipeCreateForm() {
     formData.append("ingredients", ingredients);
     formData.append("instructions", instructions);
     formData.append("cooking_time", cooking_time);
-    if (imageInput?.current?.files?.[0]) {
-      formData.append("image", imageInput.current.files[0]);
-    }
     formData.append("difficulty_level", difficulty_level);
     formData.append("category", category);
 
+    if (imageInput?.current?.files?.[0]) {
+      formData.append("image", imageInput.current.files[0]);
+    }
+
     try {
-      const { data } = await axiosReq.post("/recipes/", formData);
-      navigate(`/recipes/${data.id}`);
+      await axiosReq.put(`/recipes/${id}/`, formData);
+      navigate(`/recipes/${id}`);
     } catch (err) {
       console.log(err);
       if (err.response?.status !== 401) {
-        setErrors(err.response?.data);
+        setErrors(formErrors(err));
       }
     }
   };
@@ -142,8 +196,6 @@ function RecipeCreateForm() {
           type="number"
           name="cooking_time"
           value={cooking_time}
-          min="0" // Min attribute to prevent the user from entering negative values
-          required
           onChange={handleChange}
         />
       </Form.Group>
@@ -154,8 +206,7 @@ function RecipeCreateForm() {
       ))}
       <Form.Group>
         <Form.Label>Difficulty Level</Form.Label>
-        <Form.Control
-          as="select"
+        <Form.Select
           name="difficulty_level"
           value={difficulty_level}
           onChange={handleChange}
@@ -164,7 +215,7 @@ function RecipeCreateForm() {
           <option value="Easy">Easy</option>
           <option value="Medium">Medium</option>
           <option value="Hard">Hard</option>
-        </Form.Control>
+        </Form.Select>
       </Form.Group>
       {errors?.difficulty_level?.map((message, idx) => (
         <Alert variant="warning" key={idx}>
@@ -174,8 +225,7 @@ function RecipeCreateForm() {
 
       <Form.Group>
         <Form.Label>Category</Form.Label>
-        <Form.Control
-          as="select"
+        <Form.Select
           name="category"
           value={category}
           onChange={handleChange}
@@ -187,7 +237,7 @@ function RecipeCreateForm() {
           <option value="Gluten-free">Gluten-free</option>
           <option value="Healthy Meals">Healthy Meals</option>
           <option value="Quick and Easy">Quick and Easy</option>
-        </Form.Control>
+        </Form.Select>
       </Form.Group>
       {errors?.category?.map((message, idx) => (
         <Alert variant="warning" key={idx}>
@@ -199,48 +249,36 @@ function RecipeCreateForm() {
         className={`${btnStyles.Button} ${btnStyles.Blue}`}
         onClick={() => navigate(-1)}
       >
-        cancel
+        Cancel
       </Button>
       <Button className={`${btnStyles.Button} ${btnStyles.Blue}`} type="submit">
-        create
+        Save
       </Button>
     </div>
   );
 
+  if (loadError) return <LoadError message={loadError} onRetry={() => setRetry((value) => value + 1)} />;
+  if (authLoading || !hasLoaded) return <Asset spinner />;
   return (
     <Form onSubmit={handleSubmit}>
+      {errors.non_field_errors?.map((message, idx) => <Alert key={idx} variant="warning">{message}</Alert>)}
       <Row>
         <Col className="py-2 p-0 p-md-2" md={7} lg={8}>
           <Container
             className={`${appStyles.Content} ${styles.Container} d-flex flex-column justify-content-center`}
           >
             <Form.Group className="text-center">
-              {image ? (
-                <>
-                  <figure>
-                    <Image className={appStyles.Image} src={image} rounded />
-                  </figure>
-                  <div>
-                    <Form.Label
-                      className={`${btnStyles.Button} ${btnStyles.Blue} btn`}
-                      htmlFor="image-upload"
-                    >
-                      Change the image
-                    </Form.Label>
-                  </div>
-                </>
-              ) : (
+              <figure>
+                <Image className={appStyles.Image} src={image} rounded />
+              </figure>
+              <div>
                 <Form.Label
-                  className="d-flex justify-content-center"
+                  className={`${btnStyles.Button} ${btnStyles.Blue} btn`}
                   htmlFor="image-upload"
                 >
-                  <Asset
-                    src={Upload}
-                    message="Click or tap to upload an image"
-                  />
+                  Change the image
                 </Form.Label>
-              )}
-
+              </div>
               <Form.Control
                 type="file"
                 id="image-upload"
@@ -266,4 +304,4 @@ function RecipeCreateForm() {
   );
 }
 
-export default RecipeCreateForm;
+export default RecipeEditForm;

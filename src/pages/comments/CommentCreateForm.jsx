@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
+import Alert from "react-bootstrap/Alert";
+import { formErrors } from "../../utils/errors";
 
 import styles from "../../styles/CommentCreateEditForm.module.css";
 import Avatar from "../../components/Avatar";
@@ -12,6 +14,8 @@ function CommentCreateForm(props) {
   const { recipe, setRecipe, setComments, profile_avatar, profileAvatar, profile_id } = props;
   const avatarImage = profile_avatar || profileAvatar;
   const [content, setContent] = useState("");
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (event) => {
     setContent(event.target.value);
@@ -19,6 +23,9 @@ function CommentCreateForm(props) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    if (submitting || !content.trim()) return;
+    setSubmitting(true);
+    setErrors({});
     try {
       const { data } = await axiosRes.post("/comments/", {
         content,
@@ -29,16 +36,19 @@ function CommentCreateForm(props) {
         results: [data, ...prevComments.results],
       }));
       setRecipe((prevRecipe) => ({
+        ...prevRecipe,
         results: [
           {
             ...prevRecipe.results[0],
-            comments_count: prevRecipe.results[0].comments_count + 1,
+            comments_count: (prevRecipe.results[0].comments_count || 0) + 1,
           },
         ],
       }));
       setContent("");
     } catch (err) {
-      console.log(err);
+      setErrors(formErrors(err));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -56,12 +66,16 @@ function CommentCreateForm(props) {
             value={content}
             onChange={handleChange}
             rows={2}
+            aria-label="Comment"
           />
         </InputGroup>
       </Form.Group>
+      {[...(errors.content || []), ...(errors.recipe || []), ...(errors.non_field_errors || [])].map((message, index) => (
+        <Alert key={index} variant="warning">{message}</Alert>
+      ))}
       <button
         className={`${styles.Button} btn d-block ml-auto`}
-        disabled={!content.trim()}
+        disabled={submitting || !content.trim()}
         type="submit"
       >
         Add comment

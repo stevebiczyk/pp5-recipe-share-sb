@@ -4,9 +4,10 @@ import appStyles from "../../App.module.css";
 import Asset from "../../components/Asset";
 import { useProfileData } from "../../contexts/ProfileDataContext";
 import Profile from "./Profile";
+import LoadError from "../../components/LoadError";
 
 const PopularProfiles = ({ mobile }) => {
-  const { popularProfiles } = useProfileData();
+  const { popularProfiles, popularProfilesLoading, popularProfilesError, retryPopularProfiles } = useProfileData();
 
   return (
     <Container
@@ -14,7 +15,7 @@ const PopularProfiles = ({ mobile }) => {
         mobile && "d-lg-none text-center mb-3"
       }`}
     >
-      {popularProfiles.results.length ? (
+      {popularProfilesError ? <LoadError message={popularProfilesError} onRetry={retryPopularProfiles} /> : popularProfilesLoading ? <Asset spinner /> : popularProfiles.results.length ? (
         <>
           <p>Most followed profiles.</p>
           {mobile ? (
@@ -30,7 +31,7 @@ const PopularProfiles = ({ mobile }) => {
           )}
         </>
       ) : (
-        <Asset spinner />
+        <p>No profiles yet.</p>
       )}
     </Container>
   );

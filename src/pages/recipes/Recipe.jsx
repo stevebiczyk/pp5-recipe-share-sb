@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import Alert from "react-bootstrap/Alert";
 import styles from "../../styles/Recipe.module.css";
 import { useCurrentUser } from "../../contexts/CurrentUserContext";
 import Card from "react-bootstrap/Card";
@@ -35,6 +36,8 @@ const Recipe = (props) => {
   const currentUser = useCurrentUser();
   const is_owner = currentUser?.username === owner;
   const navigate = useNavigate();
+  const [votePending, setVotePending] = useState(false);
+  const [voteError, setVoteError] = useState("");
 
   const handleEdit = () => {
     navigate(`/recipes/${id}/edit`);
@@ -49,70 +52,26 @@ const Recipe = (props) => {
     }
   };
 
-  const handleVote = async (type = "upvote") => {
+  const changeVote = async (type) => {
+    if (votePending) return;
+    setVotePending(true);
+    setVoteError("");
     try {
-      const { data } = await axiosRes.post("/votes/", {
-        recipe: id,
-        vote_type: type,
-      });
+      const sameVote = vote_id && (vote_type || "upvote") === type;
+      if (sameVote) {
+        await axiosRes.delete(`/votes/${vote_id}/`);
+      } else {
+        await axiosRes.post("/votes/", { recipe: id, vote_type: type });
+      }
+      const { data } = await axiosRes.get(`/recipes/${id}/`);
       setRecipes((prevRecipes) => ({
         ...prevRecipes,
-        results: prevRecipes.results.map((recipe) => {
-          if (recipe.id !== id) return recipe;
-          const wasUpvoted = recipe.vote_id && recipe.vote_type !== "downvote";
-          const countDiff = wasUpvoted ? 0 : 1;
-          return {
-            ...recipe,
-            votes_count: (recipe.votes_count || 0) + countDiff,
-            vote_id: data.id,
-            vote_type: type,
-          };
-        }),
+        results: prevRecipes.results.map((recipe) => recipe.id === id ? data : recipe),
       }));
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const handleDownVote = async () => {
-    try {
-      const { data } = await axiosRes.post("/votes/downvote/", { recipe: id });
-      setRecipes((prevRecipes) => ({
-        ...prevRecipes,
-        results: prevRecipes.results.map((recipe) => {
-          if (recipe.id !== id) return recipe;
-          return {
-            ...recipe,
-            vote_id: data.id,
-            vote_type: "downvote",
-          };
-        }),
-      }));
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const handleUnVote = async () => {
-    try {
-      await axiosRes.delete(`/votes/${vote_id}/`);
-      setRecipes((prevRecipes) => ({
-        ...prevRecipes,
-        results: prevRecipes.results.map((recipe) => {
-          if (recipe.id !== id) return recipe;
-          const wasUpvoted = recipe.vote_type !== "downvote";
-          return {
-            ...recipe,
-            votes_count: wasUpvoted
-              ? Math.max(0, (recipe.votes_count || 0) - 1)
-              : recipe.votes_count,
-            vote_id: null,
-            vote_type: null,
-          };
-        }),
-      }));
-    } catch (err) {
-      console.log(err);
+    } catch {
+      setVoteError("Could not update the vote. Please try again.");
+    } finally {
+      setVotePending(false);
     }
   };
 
@@ -227,16 +186,20 @@ const Recipe = (props) => {
                   </Tooltip>
                 }
               >
-                <span
-                  onClick={isUpvoted ? handleUnVote : () => handleVote("upvote")}
-                  style={{ cursor: "pointer" }}
+                <button
+                  type="button"
+                  className={styles.VoteButton}
+                  aria-label={isUpvoted ? "Remove upvote" : "Upvote this recipe"}
+                  aria-pressed={!!isUpvoted}
+                  disabled={votePending}
+                  onClick={() => changeVote("upvote")}
                 >
                   <i
                     className={`${
                       isUpvoted ? "fas" : "far"
                     } fa-thumbs-up ${styles.Vote} mr-2`}
                   />
-                </span>
+                </button>
               </OverlayTrigger>
 
               {/* Downvote */}
@@ -248,16 +211,20 @@ const Recipe = (props) => {
                   </Tooltip>
                 }
               >
-                <span
-                  onClick={isDownvoted ? handleUnVote : handleDownVote}
-                  style={{ cursor: "pointer" }}
+                <button
+                  type="button"
+                  className={styles.VoteButton}
+                  aria-label={isDownvoted ? "Remove downvote" : "Downvote this recipe"}
+                  aria-pressed={!!isDownvoted}
+                  disabled={votePending}
+                  onClick={() => changeVote("downvote")}
                 >
                   <i
                     className={`${
                       isDownvoted ? "fas" : "far"
                     } fa-thumbs-down ${styles.Vote}`}
                   />
-                </span>
+                </button>
               </OverlayTrigger>
             </div>
           ) : (
@@ -272,13 +239,14 @@ const Recipe = (props) => {
             </OverlayTrigger>
           )}
 
-          <span className="font-weight-bold ml-1">{votes_count || 0}</span>
+          <span className="fw-bold ms-1" aria-label="Net vote score">{votes_count || 0}</span>
 
           <Link to={`/recipes/${id}`} className="ml-3">
             <i className="far fa-comments mr-1" />
             {comments_count || 0}
           </Link>
         </div>
+        {voteError && <Alert variant="warning">{voteError}</Alert>}
       </Card.Body>
     </Card>
   );

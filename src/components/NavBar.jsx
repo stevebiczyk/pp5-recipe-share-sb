@@ -10,9 +10,8 @@ import {
   useSetCurrentUser,
 } from "../contexts/CurrentUserContext";
 import Avatar from "./Avatar";
-import { api } from "../api/axiosDefaults";
+import { axiosRes, clearCsrfToken } from "../api/axiosDefaults";
 import useClickOutsideToggle from "../hooks/useClickOutsideToggle";
-import { removeTokenTimestamp } from "../utils/utils";
 
 const NavBar = () => {
   const currentUser = useCurrentUser();
@@ -23,7 +22,8 @@ const NavBar = () => {
 
   const handleSignOut = async () => {
     try {
-      await api.post("/dj-rest-auth/logout/");
+      await axiosRes.post("/dj-rest-auth/logout/");
+      clearCsrfToken();
       setCurrentUser(null);
       navigate("/");
     } catch (err) {

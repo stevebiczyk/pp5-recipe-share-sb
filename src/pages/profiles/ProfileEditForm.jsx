@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useHistory, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
@@ -10,8 +10,12 @@ import Container from "react-bootstrap/Container";
 import Alert from "react-bootstrap/Alert";
 
 import { axiosReq } from "../../api/axiosDefaults";
+import { formErrors } from "../../utils/errors";
+import Asset from "../../components/Asset";
+import LoadError from "../../components/LoadError";
 import {
   useCurrentUser,
+  useAuthLoading,
   useSetCurrentUser,
 } from "../../contexts/CurrentUserContext";
 
@@ -20,9 +24,10 @@ import appStyles from "../../App.module.css";
 
 const ProfileEditForm = () => {
   const currentUser = useCurrentUser();
+  const authLoading = useAuthLoading();
   const setCurrentUser = useSetCurrentUser();
   const { id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const imageFile = useRef();
 
   const [profileData, setProfileData] = useState({
@@ -33,25 +38,40 @@ const ProfileEditForm = () => {
   const { name, bio, avatar } = profileData;
 
   const [errors, setErrors] = useState({});
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
+    if (authLoading) return;
+    const controller = new AbortController();
+    let active = true;
+    setHasLoaded(false);
+    setLoadError("");
     const handleMount = async () => {
       if (currentUser?.profile_id?.toString() === id) {
         try {
-          const { data } = await axiosReq.get(`/profiles/${id}/`);
+          const { data } = await axiosReq.get(`/profiles/${id}/`, { signal: controller.signal });
+          if (!active) return;
           const { name, bio, avatar } = data;
           setProfileData({ name, bio, avatar });
         } catch (err) {
-          console.log(err);
-          history.push("/");
+          if (active) setLoadError(err.response?.status === 404 ? "Profile not found." : "Could not load this profile. Please try again.");
+        } finally {
+          if (active) setHasLoaded(true);
         }
       } else {
-        history.push("/");
+        navigate("/", { replace: true });
       }
     };
 
     handleMount();
-  }, [currentUser, history, id]);
+    return () => { active = false; controller.abort(); };
+  }, [authLoading, currentUser, navigate, id, retry]);
+
+  useEffect(() => () => {
+    if (avatar?.startsWith("blob:")) URL.revokeObjectURL(avatar);
+  }, [avatar]);
 
   const handleChange = (event) => {
     setProfileData({
@@ -77,10 +97,10 @@ const ProfileEditForm = () => {
         profile_avatar: data.avatar,
         profile_image: data.avatar,
       }));
-      history.goBack();
+      navigate(-1);
     } catch (err) {
       console.log(err);
-      setErrors(err.response?.data);
+      setErrors(formErrors(err));
     }
   };
 
@@ -104,7 +124,7 @@ const ProfileEditForm = () => {
       ))}
       <Button
         className={`${btnStyles.Button} ${btnStyles.Blue}`}
-        onClick={() => history.goBack()}
+        onClick={() => navigate(-1)}
       >
         cancel
       </Button>
@@ -114,8 +134,12 @@ const ProfileEditForm = () => {
     </>
   );
 
+  if (loadError) return <LoadError message={loadError} onRetry={() => setRetry((value) => value + 1)} />;
+  if (authLoading || !hasLoaded) return <Asset spinner />;
+
   return (
     <Form onSubmit={handleSubmit}>
+      {errors.non_field_errors?.map((message, idx) => <Alert key={idx} variant="warning">{message}</Alert>)}
       <Row>
         <Col className="py-2 p-0 p-md-2 text-center" md={7} lg={6}>
           <Container className={appStyles.Content}>
@@ -125,7 +149,7 @@ const ProfileEditForm = () => {
                   <Image src={avatar} fluid />
                 </figure>
               )}
-              {errors?.image?.map((message, idx) => (
+              {errors?.avatar?.map((message, idx) => (
                 <Alert variant="warning" key={idx}>
                   {message}
                 </Alert>
@@ -138,7 +162,8 @@ const ProfileEditForm = () => {
                   Change the image
                 </Form.Label>
               </div>
-              <Form.File
+              <Form.Control
+                type="file"
                 id="image-upload"
                 ref={imageFile}
                 accept="image/*"
@@ -146,7 +171,7 @@ const ProfileEditForm = () => {
                   if (e.target.files.length) {
                     setProfileData({
                       ...profileData,
-                      image: URL.createObjectURL(e.target.files[0]),
+                      avatar: URL.createObjectURL(e.target.files[0]),
                     });
                   }
                 }}

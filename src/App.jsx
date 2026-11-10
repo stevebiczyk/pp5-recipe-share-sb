@@ -45,7 +45,7 @@ function App() {
             element={
               <RecipesPage
                 message="No results found. Adjust the search keyword or vote for a recipe."
-                filter={`votes__owner__profile=${profile_id}&ordering=-votes__created_at&`}
+                filter={`votes__owner__profile=${profile_id}&ordering=-current_vote_created_at&`}
               />
             }
           />

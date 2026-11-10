@@ -15,6 +15,18 @@ h5 {
   color: #f85032;
 }
 
+.VoteButton {
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.VoteButton:focus-visible {
+  outline: 2px solid #2142b2;
+  outline-offset: 2px;
+}
+
 .Vote:hover {
   color: #2142b2;
 }

@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
+import React from "react";
 import Navbar from "../NavBar";
 import { BrowserRouter as Router } from "react-router-dom";
 import { CurrentUserProvider } from "../../contexts/CurrentUserContext";
@@ -10,7 +11,6 @@ test("renders NavBar", () => {
     </Router>
   );
 
-  screen.debug();
   const LogInLink = screen.getByRole("link", { name: "Log in" });
   expect(LogInLink).toBeInTheDocument();
 });

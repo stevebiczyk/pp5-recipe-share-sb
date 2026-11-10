@@ -7,10 +7,13 @@ import Container from "react-bootstrap/Container";
 import Form from "react-bootstrap/Form";
 import Row from "react-bootstrap/Row";
 
-import { useHistory, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { axiosRes } from "../../api/axiosDefaults";
+import { formErrors } from "../../utils/errors";
+import Asset from "../../components/Asset";
 import {
   useCurrentUser,
+  useAuthLoading,
   useSetCurrentUser,
 } from "../../contexts/CurrentUserContext";
 
@@ -21,19 +24,21 @@ const UsernameForm = () => {
   const [username, setUsername] = useState("");
   const [errors, setErrors] = useState({});
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const { id } = useParams();
 
   const currentUser = useCurrentUser();
+  const authLoading = useAuthLoading();
   const setCurrentUser = useSetCurrentUser();
 
   useEffect(() => {
+    if (authLoading) return;
     if (currentUser?.profile_id?.toString() === id) {
       setUsername(currentUser.username);
     } else {
-      history.push("/");
+      navigate("/", { replace: true });
     }
-  }, [currentUser, history, id]);
+  }, [authLoading, currentUser, navigate, id]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -45,18 +50,20 @@ const UsernameForm = () => {
         ...prevUser,
         username,
       }));
-      history.goBack();
+      navigate(-1);
     } catch (err) {
       console.log(err);
-      setErrors(err.response?.data);
+      setErrors(formErrors(err));
     }
   };
 
+  if (authLoading) return <Asset spinner />;
   return (
     <Row>
       <Col className="py-2 mx-auto text-center" md={6}>
         <Container className={appStyles.Content}>
           <Form onSubmit={handleSubmit} className="my-2">
+            {errors.non_field_errors?.map((message, idx) => <Alert key={idx} variant="warning">{message}</Alert>)}
             <Form.Group>
               <Form.Label>Change username</Form.Label>
               <Form.Control
@@ -73,7 +80,7 @@ const UsernameForm = () => {
             ))}
             <Button
               className={`${btnStyles.Button} ${btnStyles.Blue}`}
-              onClick={() => history.goBack()}
+              onClick={() => navigate(-1)}
             >
               cancel
             </Button>

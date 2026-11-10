@@ -1,9 +1,9 @@
 import { axiosReq } from "../api/axiosDefaults";
 
-export const fetchMoreData = async (resource, setResource) => {
+export const fetchMoreData = async (resource, setResource, onError = () => {}) => {
   try {
     const { data } = await axiosReq.get(resource.next);
-    setResource((prevResource) => ({
+    setResource((prevResource) => prevResource.next !== resource.next ? prevResource : ({
       ...prevResource,
       next: data.next,
       results: data.results.reduce((acc, cur) => {
@@ -12,7 +12,9 @@ export const fetchMoreData = async (resource, setResource) => {
           : [...acc, cur];
       }, prevResource.results),
     }));
-  } catch (err) {}
+  } catch {
+    onError("Could not load more results. Please try again.");
+  }
 };
 
 export const followHelper = (profile, clickedProfile, following_id) => {

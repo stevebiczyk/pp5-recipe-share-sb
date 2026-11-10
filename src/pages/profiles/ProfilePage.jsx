@@ -5,6 +5,7 @@ import Row from "react-bootstrap/Row";
 import Container from "react-bootstrap/Container";
 
 import Asset from "../../components/Asset";
+import LoadError from "../../components/LoadError";
 
 import styles from "../../styles/ProfilePage.module.css";
 import appStyles from "../../App.module.css";
@@ -29,6 +30,8 @@ import { ProfileEditDropdown } from "../../components/MoreDropdown";
 function ProfilePage() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [profileRecipes, setProfileRecipes] = useState({ results: [] });
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   const currentUser = useCurrentUser();
   const { id } = useParams();
@@ -40,13 +43,18 @@ function ProfilePage() {
   const is_owner = currentUser?.username === profile?.owner;
 
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    setHasLoaded(false);
+    setLoadError("");
     const fetchData = async () => {
       try {
         const [{ data: pageProfile }, { data: profileRecipes }] =
           await Promise.all([
-            axiosReq.get(`/profiles/${id}/`),
-            axiosReq.get(`/recipes/?owner__profile=${id}`),
+            axiosReq.get(`/profiles/${id}/`, { signal: controller.signal }),
+            axiosReq.get(`/recipes/?owner__profile=${id}`, { signal: controller.signal }),
           ]);
+        if (!active) return;
         setProfileData((prevState) => ({
           ...prevState,
           pageProfile: { results: [pageProfile] },
@@ -54,16 +62,17 @@ function ProfilePage() {
         setProfileRecipes(profileRecipes);
         setHasLoaded(true);
       } catch (err) {
-        console.log(err);
+        if (active) setLoadError(err.response?.status === 404 ? "Profile not found." : "Could not load this profile. Please try again.");
       }
     };
     fetchData();
-  }, [id, setProfileData]);
+    return () => { active = false; controller.abort(); };
+  }, [id, setProfileData, currentUser, retry]);
 
   const mainProfile = (
     <>
       {profile?.is_owner && <ProfileEditDropdown id={profile?.id} />}
-      <Row noGutters className="px-3 text-center">
+      <Row className="g-0 px-3 text-center">
         <Col lg={3} className="text-lg-left">
           <Image
             className={styles.ProfileImage}
@@ -73,7 +82,7 @@ function ProfilePage() {
         </Col>
         <Col lg={6}>
           <h3 className="m-2">{profile?.owner}</h3>
-          <Row className="justify-content-center no-gutters">
+          <Row className="justify-content-center g-0">
             <Col xs={3} className="my-2">
               <div>{profile?.recipes_count}</div>
               <div>Recipes</div>
@@ -129,7 +138,7 @@ function ProfilePage() {
           dataLength={profileRecipes.results.length}
           loader={<Asset spinner />}
           hasMore={!!profileRecipes.next}
-          next={() => fetchMoreData(profileRecipes, setProfileRecipes)}
+          next={() => fetchMoreData(profileRecipes, setProfileRecipes, setLoadError)}
         />
       ) : (
         <Asset
@@ -145,7 +154,7 @@ function ProfilePage() {
       <Col className="py-2 p-0 p-lg-2" lg={8}>
         <PopularProfiles mobile />
         <Container className={appStyles.Content}>
-          {hasLoaded ? (
+          {loadError ? <LoadError message={loadError} onRetry={() => setRetry((value) => value + 1)} /> : hasLoaded ? (
             <>
               {mainProfile}
               {mainProfileRecipes}

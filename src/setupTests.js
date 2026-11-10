@@ -2,12 +2,11 @@
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
-import "@testing-library/jest-dom";
-import { setupServer } from "msw/node";
-import { handlers } from "./mocks/handlers";
+import "@testing-library/jest-dom/vitest";
+import { cleanup } from "@testing-library/react";
+import { server } from "./mocks/server";
+import { clearCsrfToken } from "./api/axiosDefaults";
 
-const server = setupServer(...handlers);
-
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
+beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
+afterEach(() => { cleanup(); server.resetHandlers(); clearCsrfToken(); });
 afterAll(() => server.close());

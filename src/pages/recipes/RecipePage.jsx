@@ -8,6 +8,7 @@ import appStyles from "../../App.module.css";
 import { useParams } from "react-router";
 import { axiosReq } from "../../api/axiosDefaults";
 import Recipe from "./Recipe";
+import LoadError from "../../components/LoadError";
 import CommentCreateForm from "../comments/CommentCreateForm";
 import { useCurrentUser } from "../../contexts/CurrentUserContext";
 import Comment from "../comments/Comment";
@@ -24,23 +25,36 @@ function RecipePage() {
   const currentUser = useCurrentUser();
   const profile_avatar = currentUser?.profile_avatar || currentUser?.profile_image;
   const [comments, setComments] = useState({ results: [] });
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    setHasLoaded(false);
+    setLoadError("");
     const handleMount = async () => {
       try {
         const [{ data: recipe }, { data: comments }] = await Promise.all([
-          axiosReq.get(`/recipes/${id}`),
-          axiosReq.get(`/comments/?recipe=${id}`),
+          axiosReq.get(`/recipes/${id}/`, { signal: controller.signal }),
+          axiosReq.get(`/comments/?recipe=${id}`, { signal: controller.signal }),
         ]);
+        if (!active) return;
         setRecipe({ results: [recipe] });
         setComments(comments);
+        setHasLoaded(true);
       } catch (err) {
-        console.log(err);
+        if (active) setLoadError(err.response?.status === 404 ? "Recipe not found." : "Could not load this recipe. Please try again.");
       }
     };
 
     handleMount();
-  }, [id]);
+    return () => { active = false; controller.abort(); };
+  }, [id, currentUser, retry]);
+
+  if (loadError) return <LoadError message={loadError} onRetry={() => setRetry((value) => value + 1)} />;
+  if (!hasLoaded) return <Asset spinner />;
 
   return (
     <Row className="h-100">
@@ -73,7 +87,7 @@ function RecipePage() {
               dataLength={comments.results.length}
               loader={<Asset spinner />}
               hasMore={!!comments.next}
-              next={() => fetchMoreData(comments, setComments)}
+              next={() => fetchMoreData(comments, setComments, setLoadError)}
             />
           ) : currentUser ? (
             <span>No comments yet, be the first to comment!</span>

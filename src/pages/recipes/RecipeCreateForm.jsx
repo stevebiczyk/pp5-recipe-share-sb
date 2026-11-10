@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { formErrors } from "../../utils/errors";
+import { useAuthLoading } from "../../contexts/CurrentUserContext";
 
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
@@ -6,15 +8,21 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 
+import Upload from "../../assets/upload.png";
+
 import styles from "../../styles/RecipeCreateEditForm.module.css";
 import appStyles from "../../App.module.css";
 import btnStyles from "../../styles/Button.module.css";
+import Asset from "../../components/Asset";
 import Alert from "react-bootstrap/Alert";
 import Image from "react-bootstrap/Image";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { axiosReq } from "../../api/axiosDefaults";
+import { useRedirect } from "../../hooks/useRedirect";
 
-function RecipeEditForm() {
+function RecipeCreateForm() {
+  useRedirect("loggedOut");
+  const authLoading = useAuthLoading();
   const [errors, setErrors] = useState({});
 
   const [recipeData, setRecipeData] = useState({
@@ -37,42 +45,12 @@ function RecipeEditForm() {
   } = recipeData;
 
   const imageInput = useRef(null);
-  const history = useHistory();
-  const { id } = useParams();
 
-  useEffect(() => {
-    const handleMount = async () => {
-      try {
-        const { data } = await axiosReq.get(`/recipes/${id}/`);
-        const {
-          title,
-          ingredients,
-          instructions,
-          cooking_time,
-          image,
-          difficulty_level,
-          category,
-          is_owner,
-        } = data;
+  const navigate = useNavigate();
 
-        is_owner
-          ? setRecipeData({
-              title,
-              ingredients,
-              instructions,
-              cooking_time,
-              image,
-              difficulty_level,
-              category: category || "",
-            })
-          : history.push("/");
-      } catch (err) {
-        console.log(err);
-      }
-    };
-
-    handleMount();
-  }, [history, id]);
+  useEffect(() => () => {
+    if (image.startsWith("blob:")) URL.revokeObjectURL(image);
+  }, [image]);
 
   const handleChange = (event) => {
     setRecipeData({
@@ -99,20 +77,19 @@ function RecipeEditForm() {
     formData.append("ingredients", ingredients);
     formData.append("instructions", instructions);
     formData.append("cooking_time", cooking_time);
-    formData.append("difficulty_level", difficulty_level);
-    formData.append("category", category);
-
     if (imageInput?.current?.files?.[0]) {
       formData.append("image", imageInput.current.files[0]);
     }
+    formData.append("difficulty_level", difficulty_level);
+    formData.append("category", category);
 
     try {
-      await axiosReq.put(`/recipes/${id}/`, formData);
-      history.push(`/recipes/${id}`);
+      const { data } = await axiosReq.post("/recipes/", formData);
+      navigate(`/recipes/${data.id}`);
     } catch (err) {
       console.log(err);
       if (err.response?.status !== 401) {
-        setErrors(err.response?.data);
+        setErrors(formErrors(err));
       }
     }
   };
@@ -172,6 +149,8 @@ function RecipeEditForm() {
           type="number"
           name="cooking_time"
           value={cooking_time}
+          min="0" // Min attribute to prevent the user from entering negative values
+          required
           onChange={handleChange}
         />
       </Form.Group>
@@ -182,8 +161,7 @@ function RecipeEditForm() {
       ))}
       <Form.Group>
         <Form.Label>Difficulty Level</Form.Label>
-        <Form.Control
-          as="select"
+        <Form.Select
           name="difficulty_level"
           value={difficulty_level}
           onChange={handleChange}
@@ -192,7 +170,7 @@ function RecipeEditForm() {
           <option value="Easy">Easy</option>
           <option value="Medium">Medium</option>
           <option value="Hard">Hard</option>
-        </Form.Control>
+        </Form.Select>
       </Form.Group>
       {errors?.difficulty_level?.map((message, idx) => (
         <Alert variant="warning" key={idx}>
@@ -202,8 +180,7 @@ function RecipeEditForm() {
 
       <Form.Group>
         <Form.Label>Category</Form.Label>
-        <Form.Control
-          as="select"
+        <Form.Select
           name="category"
           value={category}
           onChange={handleChange}
@@ -215,7 +192,7 @@ function RecipeEditForm() {
           <option value="Gluten-free">Gluten-free</option>
           <option value="Healthy Meals">Healthy Meals</option>
           <option value="Quick and Easy">Quick and Easy</option>
-        </Form.Control>
+        </Form.Select>
       </Form.Group>
       {errors?.category?.map((message, idx) => (
         <Alert variant="warning" key={idx}>
@@ -225,36 +202,54 @@ function RecipeEditForm() {
 
       <Button
         className={`${btnStyles.Button} ${btnStyles.Blue}`}
-        onClick={() => history.goBack()}
+        onClick={() => navigate(-1)}
       >
-        Cancel
+        cancel
       </Button>
       <Button className={`${btnStyles.Button} ${btnStyles.Blue}`} type="submit">
-        Save
+        create
       </Button>
     </div>
   );
 
+  if (authLoading) return <Asset spinner />;
   return (
     <Form onSubmit={handleSubmit}>
+      {errors.non_field_errors?.map((message, idx) => <Alert key={idx} variant="warning">{message}</Alert>)}
       <Row>
         <Col className="py-2 p-0 p-md-2" md={7} lg={8}>
           <Container
             className={`${appStyles.Content} ${styles.Container} d-flex flex-column justify-content-center`}
           >
             <Form.Group className="text-center">
-              <figure>
-                <Image className={appStyles.Image} src={image} rounded />
-              </figure>
-              <div>
+              {image ? (
+                <>
+                  <figure>
+                    <Image className={appStyles.Image} src={image} rounded />
+                  </figure>
+                  <div>
+                    <Form.Label
+                      className={`${btnStyles.Button} ${btnStyles.Blue} btn`}
+                      htmlFor="image-upload"
+                    >
+                      Change the image
+                    </Form.Label>
+                  </div>
+                </>
+              ) : (
                 <Form.Label
-                  className={`${btnStyles.Button} ${btnStyles.Blue} btn`}
+                  className="d-flex justify-content-center"
                   htmlFor="image-upload"
                 >
-                  Change the image
+                  <Asset
+                    src={Upload}
+                    message="Click or tap to upload an image"
+                  />
                 </Form.Label>
-              </div>
-              <Form.File
+              )}
+
+              <Form.Control
+                type="file"
                 id="image-upload"
                 accept="image/*"
                 onChange={handleChangeImage}
@@ -278,4 +273,4 @@ function RecipeEditForm() {
   );
 }
 
-export default RecipeEditForm;
+export default RecipeCreateForm;

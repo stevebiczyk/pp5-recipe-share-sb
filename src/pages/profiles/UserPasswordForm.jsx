@@ -7,17 +7,20 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
 
-import { useHistory, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { axiosRes } from "../../api/axiosDefaults";
-import { useCurrentUser } from "../../contexts/CurrentUserContext";
+import { formErrors } from "../../utils/errors";
+import Asset from "../../components/Asset";
+import { useAuthLoading, useCurrentUser } from "../../contexts/CurrentUserContext";
 
 import btnStyles from "../../styles/Button.module.css";
 import appStyles from "../../App.module.css";
 
 const UserPasswordForm = () => {
-  const history = useHistory();
+  const navigate = useNavigate();
   const { id } = useParams();
   const currentUser = useCurrentUser();
+  const authLoading = useAuthLoading();
 
   const [userData, setUserData] = useState({
     new_password1: "",
@@ -35,28 +38,31 @@ const UserPasswordForm = () => {
   };
 
   useEffect(() => {
+    if (authLoading) return;
     if (currentUser?.profile_id?.toString() !== id) {
       // redirect user if they are not the owner of this profile
-      history.push("/");
+      navigate("/", { replace: true });
     }
-  }, [currentUser, history, id]);
+  }, [authLoading, currentUser, navigate, id]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
       await axiosRes.post("/dj-rest-auth/password/change/", userData);
-      history.goBack();
+      navigate(-1);
     } catch (err) {
       console.log(err);
-      setErrors(err.response?.data);
+      setErrors(formErrors(err));
     }
   };
 
+  if (authLoading) return <Asset spinner />;
   return (
     <Row>
       <Col className="py-2 mx-auto text-center" md={6}>
         <Container className={appStyles.Content}>
           <Form onSubmit={handleSubmit}>
+            {errors.non_field_errors?.map((message, idx) => <Alert key={idx} variant="warning">{message}</Alert>)}
             <Form.Group>
               <Form.Label>New password</Form.Label>
               <Form.Control
@@ -89,7 +95,7 @@ const UserPasswordForm = () => {
             ))}
             <Button
               className={`${btnStyles.Button} ${btnStyles.Blue}`}
-              onClick={() => history.goBack()}
+              onClick={() => navigate(-1)}
             >
               cancel
             </Button>

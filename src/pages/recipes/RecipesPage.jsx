@@ -7,6 +7,7 @@ import Row from "react-bootstrap/Row";
 import Container from "react-bootstrap/Container";
 
 import Recipe from "./Recipe";
+import LoadError from "../../components/LoadError";
 import Asset from "../../components/Asset";
 
 import appStyles from "../../App.module.css";
@@ -23,6 +24,8 @@ import { useCurrentUser } from "../../contexts/CurrentUserContext";
 function RecipesPage({ message, filter = "" }) {
   const [recipes, setRecipes] = useState({ results: [] });
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [loadError, setLoadError] = useState("");
+  const [retry, setRetry] = useState(0);
   const { pathname } = useLocation();
   const currentUser = useCurrentUser();
 
@@ -40,30 +43,33 @@ function RecipesPage({ message, filter = "" }) {
   ];
 
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
     const fetchRecipes = async () => {
       try {
-        const categoryFilter =
-          selectedCategory && selectedCategory !== "All"
-            ? `category=${encodeURIComponent(selectedCategory)}&`
-            : "";
-        const { data } = await axiosReq.get(
-          `/recipes/?${filter}${categoryFilter}search=${query}`
-        );
+        const params = new URLSearchParams(filter);
+        params.set("search", query);
+        if (selectedCategory && selectedCategory !== "All") params.set("category", selectedCategory);
+        const { data } = await axiosReq.get("/recipes/", { params, signal: controller.signal });
+        if (!active) return;
         setRecipes(data);
         setHasLoaded(true);
-      } catch (err) {
-        console.log(err);
+      } catch {
+        if (active) setLoadError("Could not load recipes. Please try again.");
       }
     };
 
     setHasLoaded(false);
+    setLoadError("");
     const timer = setTimeout(() => {
       fetchRecipes();
     }, 1000);
     return () => {
+      active = false;
+      controller.abort();
       clearTimeout(timer);
     };
-  }, [filter, query, selectedCategory, pathname, currentUser]);
+  }, [filter, query, selectedCategory, pathname, currentUser, retry]);
 
   return (
     <Row className="h-100">
@@ -105,7 +111,7 @@ function RecipesPage({ message, filter = "" }) {
             </Button>
           ))}
         </div>
-        {hasLoaded ? (
+        {loadError ? <LoadError message={loadError} onRetry={() => setRetry((value) => value + 1)} /> : hasLoaded ? (
           <>
             {recipes.results.length ? (
               <InfiniteScroll
@@ -115,7 +121,7 @@ function RecipesPage({ message, filter = "" }) {
                 dataLength={recipes.results.length}
                 loader={<Asset spinner />}
                 hasMore={!!recipes.next}
-                next={() => fetchMoreData(recipes, setRecipes)}
+                next={() => fetchMoreData(recipes, setRecipes, setLoadError)}
               />
             ) : (
               <Container className={appStyles.Content}>

@@ -4,7 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import styles from "../../styles/RegisterLogInForm.module.css";
 import btnStyles from "../../styles/Button.module.css";
 import appStyles from "../../App.module.css";
-import { api } from "../../api/axiosDefaults";
+import { api, clearCsrfToken } from "../../api/axiosDefaults";
+import { formErrors } from "../../utils/errors";
 import { useRedirect } from "../../hooks/useRedirect";
 
 import Form from "react-bootstrap/Form";
@@ -40,9 +41,10 @@ const RegistrationForm = () => {
     event.preventDefault();
     try {
       await api.post("/dj-rest-auth/registration/", registrationData);
-      navigate("/login");
+      clearCsrfToken();
+      navigate("/login", { replace: true });
     } catch (err) {
-      setErrors(err.response?.data);
+      setErrors(formErrors(err));
     }
   };
 

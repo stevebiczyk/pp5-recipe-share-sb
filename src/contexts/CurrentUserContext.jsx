@@ -3,9 +3,11 @@ import { api, axiosReq, axiosRes } from "../api/axiosDefaults";
 
 export const CurrentUserContext = createContext(null);
 export const SetCurrentUserContext = createContext(() => {});
+const AuthLoadingContext = createContext(true);
 
 export const useCurrentUser = () => useContext(CurrentUserContext);
 export const useSetCurrentUser = () => useContext(SetCurrentUserContext);
+export const useAuthLoading = () => useContext(AuthLoadingContext);
 
 let refreshPromise = null;
 
@@ -21,27 +23,11 @@ const refreshAccessToken = () => {
 
 export const CurrentUserProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
 
-    const loadUser = async () => {
-      try {
-        const { data } = await axiosRes.get("/dj-rest-auth/user/");
-        if (active) setCurrentUser(data);
-      } catch {
-        if (active) setCurrentUser(null);
-      }
-    };
-
-    loadUser();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
     const handleAuthError = async (error) => {
       const request = error.config;
       const url = request?.url || "";
@@ -67,9 +53,11 @@ export const CurrentUserProvider = ({ children }) => {
       try {
         await refreshAccessToken();
         return api(request);
-      } catch {
-        setCurrentUser(null);
-        return Promise.reject(error);
+      } catch (refreshError) {
+        // Only a rejected refresh credential proves the session is no longer valid.
+        // Network, CSRF and server failures should leave an established user intact.
+        if (active && refreshError.response?.status === 401) setCurrentUser(null);
+        return Promise.reject(refreshError);
       }
     };
 
@@ -83,17 +71,32 @@ export const CurrentUserProvider = ({ children }) => {
       handleAuthError,
     );
 
+    const loadUser = async () => {
+      try {
+        const { data } = await axiosRes.get("/dj-rest-auth/user/");
+        if (active) setCurrentUser(data);
+      } catch {
+        if (active) setCurrentUser(null);
+      } finally {
+        if (active) setAuthLoading(false);
+      }
+    };
+    loadUser();
+
     return () => {
+      active = false;
       axiosReq.interceptors.response.eject(reqInterceptor);
       axiosRes.interceptors.response.eject(resInterceptor);
     };
   }, []);
 
   return (
-    <CurrentUserContext.Provider value={currentUser}>
-      <SetCurrentUserContext.Provider value={setCurrentUser}>
-        {children}
-      </SetCurrentUserContext.Provider>
-    </CurrentUserContext.Provider>
+    <AuthLoadingContext.Provider value={authLoading}>
+      <CurrentUserContext.Provider value={currentUser}>
+        <SetCurrentUserContext.Provider value={setCurrentUser}>
+          {children}
+        </SetCurrentUserContext.Provider>
+      </CurrentUserContext.Provider>
+    </AuthLoadingContext.Provider>
   );
 };

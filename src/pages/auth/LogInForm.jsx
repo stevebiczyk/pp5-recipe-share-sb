@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { api } from "../../api/axiosDefaults";
+import { api, clearCsrfToken } from "../../api/axiosDefaults";
+import { formErrors } from "../../utils/errors";
 
 import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
@@ -34,11 +35,12 @@ function LogInForm() {
     event.preventDefault();
     try {
       const { data } = await api.post("/dj-rest-auth/login/", LogInData);
+      clearCsrfToken();
       setCurrentUser(data.user);
-      navigate(-1);
+      navigate("/", { replace: true });
       // navigate("/");
     } catch (err) {
-      setErrors(err.response?.data);
+      setErrors(formErrors(err));
     }
   };
 
