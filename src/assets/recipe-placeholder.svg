@@ -1,0 +1,42 @@
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 800 600"
+     role="img"
+     aria-label="No recipe image">
+
+    <rect width="800" height="600" fill="#f0eee8"/>
+
+    <g fill="none"
+       stroke="#a49e89"
+       stroke-width="7"
+       stroke-linecap="round"
+       stroke-linejoin="round">
+
+        <!-- Plate -->
+        <circle cx="400" cy="265" r="115"/>
+        <circle cx="400" cy="265" r="85"
+                stroke-width="3"/>
+
+        <!-- Fork -->
+        <path d="M240 150 V220
+                 Q260 250 280 220
+                 V150"/>
+        <path d="M260 150 V385"/>
+
+        <!-- Knife -->
+        <path d="M560 150
+                 Q515 215 560 270
+                 V385"/>
+        <path d="M560 150 V270"/>
+
+    </g>
+
+    <text x="400"
+          y="480"
+          text-anchor="middle"
+          font-family="Arial, sans-serif"
+          font-size="28"
+          fill="#716c5d">
+        No recipe image
+    </text>
+</svg>
