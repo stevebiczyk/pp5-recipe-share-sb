@@ -15,7 +15,7 @@ import appStyles from "../../App.module.css";
 import btnStyles from "../../styles/Button.module.css";
 import Asset from "../../components/Asset";
 import Alert from "react-bootstrap/Alert";
-import Image from "react-bootstrap/Image";
+import RecipeImage from "../../components/RecipeImage";
 import { useNavigate } from "react-router-dom";
 import { axiosReq } from "../../api/axiosDefaults";
 import { useRedirect } from "../../hooks/useRedirect";
@@ -48,9 +48,12 @@ function RecipeCreateForm() {
 
   const navigate = useNavigate();
 
-  useEffect(() => () => {
-    if (image.startsWith("blob:")) URL.revokeObjectURL(image);
-  }, [image]);
+  useEffect(
+    () => () => {
+      if (image.startsWith("blob:")) URL.revokeObjectURL(image);
+    },
+    [image],
+  );
 
   const handleChange = (event) => {
     setRecipeData({
@@ -180,11 +183,7 @@ function RecipeCreateForm() {
 
       <Form.Group>
         <Form.Label>Category</Form.Label>
-        <Form.Select
-          name="category"
-          value={category}
-          onChange={handleChange}
-        >
+        <Form.Select name="category" value={category} onChange={handleChange}>
           <option value="">Select Category</option>
           <option value="Vegetarian">Vegetarian</option>
           <option value="Vegan">Vegan</option>
@@ -215,7 +214,11 @@ function RecipeCreateForm() {
   if (authLoading) return <Asset spinner />;
   return (
     <Form onSubmit={handleSubmit}>
-      {errors.non_field_errors?.map((message, idx) => <Alert key={idx} variant="warning">{message}</Alert>)}
+      {errors.non_field_errors?.map((message, idx) => (
+        <Alert key={idx} variant="warning">
+          {message}
+        </Alert>
+      ))}
       <Row>
         <Col className="py-2 p-0 p-md-2" md={7} lg={8}>
           <Container
@@ -225,7 +228,12 @@ function RecipeCreateForm() {
               {image ? (
                 <>
                   <figure>
-                    <Image className={appStyles.Image} src={image} rounded />
+                    <RecipeImage
+                      src={image}
+                      alt={title || "recipe preview"}
+                      className={`${appStyles.Image} rounded`}
+                      loading="eager"
+                    />
                   </figure>
                   <div>
                     <Form.Label

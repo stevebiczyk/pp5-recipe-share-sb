@@ -10,11 +10,14 @@ import styles from "../../styles/RecipeCreateEditForm.module.css";
 import appStyles from "../../App.module.css";
 import btnStyles from "../../styles/Button.module.css";
 import Alert from "react-bootstrap/Alert";
-import Image from "react-bootstrap/Image";
+import RecipeImage from "../../components/RecipeImage";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosReq } from "../../api/axiosDefaults";
 import { formErrors } from "../../utils/errors";
-import { useAuthLoading, useCurrentUser } from "../../contexts/CurrentUserContext";
+import {
+  useAuthLoading,
+  useCurrentUser,
+} from "../../contexts/CurrentUserContext";
 import { useRedirect } from "../../hooks/useRedirect";
 import Asset from "../../components/Asset";
 import LoadError from "../../components/LoadError";
@@ -59,7 +62,9 @@ function RecipeEditForm() {
     setLoadError("");
     const handleMount = async () => {
       try {
-        const { data } = await axiosReq.get(`/recipes/${id}/`, { signal: controller.signal });
+        const { data } = await axiosReq.get(`/recipes/${id}/`, {
+          signal: controller.signal,
+        });
         if (!active) return;
         const {
           title,
@@ -84,19 +89,30 @@ function RecipeEditForm() {
             })
           : navigate("/", { replace: true });
       } catch (err) {
-        if (active) setLoadError(err.response?.status === 404 ? "Recipe not found." : "Could not load this recipe. Please try again.");
+        if (active)
+          setLoadError(
+            err.response?.status === 404
+              ? "Recipe not found."
+              : "Could not load this recipe. Please try again.",
+          );
       } finally {
         if (active) setHasLoaded(true);
       }
     };
 
     handleMount();
-    return () => { active = false; controller.abort(); };
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [authLoading, currentUser, navigate, id, retry]);
 
-  useEffect(() => () => {
-    if (image?.startsWith("blob:")) URL.revokeObjectURL(image);
-  }, [image]);
+  useEffect(
+    () => () => {
+      if (image?.startsWith("blob:")) URL.revokeObjectURL(image);
+    },
+    [image],
+  );
 
   const handleChange = (event) => {
     setRecipeData({
@@ -225,11 +241,7 @@ function RecipeEditForm() {
 
       <Form.Group>
         <Form.Label>Category</Form.Label>
-        <Form.Select
-          name="category"
-          value={category}
-          onChange={handleChange}
-        >
+        <Form.Select name="category" value={category} onChange={handleChange}>
           <option value="">Select Category</option>
           <option value="Vegetarian">Vegetarian</option>
           <option value="Vegan">Vegan</option>
@@ -257,11 +269,21 @@ function RecipeEditForm() {
     </div>
   );
 
-  if (loadError) return <LoadError message={loadError} onRetry={() => setRetry((value) => value + 1)} />;
+  if (loadError)
+    return (
+      <LoadError
+        message={loadError}
+        onRetry={() => setRetry((value) => value + 1)}
+      />
+    );
   if (authLoading || !hasLoaded) return <Asset spinner />;
   return (
     <Form onSubmit={handleSubmit}>
-      {errors.non_field_errors?.map((message, idx) => <Alert key={idx} variant="warning">{message}</Alert>)}
+      {errors.non_field_errors?.map((message, idx) => (
+        <Alert key={idx} variant="warning">
+          {message}
+        </Alert>
+      ))}
       <Row>
         <Col className="py-2 p-0 p-md-2" md={7} lg={8}>
           <Container
@@ -269,7 +291,12 @@ function RecipeEditForm() {
           >
             <Form.Group className="text-center">
               <figure>
-                <Image className={appStyles.Image} src={image} rounded />
+                <RecipeImage
+                  src={image}
+                  alt={title || "recipe preview"}
+                  className={`${appStyles.Image} rounded`}
+                  loading="eager"
+                />
               </figure>
               <div>
                 <Form.Label

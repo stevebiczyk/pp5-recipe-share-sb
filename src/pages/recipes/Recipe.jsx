@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Alert from "react-bootstrap/Alert";
 import styles from "../../styles/Recipe.module.css";
+import RecipeImage from "../../components/RecipeImage";
 import { useCurrentUser } from "../../contexts/CurrentUserContext";
 import Card from "react-bootstrap/Card";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
@@ -66,7 +67,9 @@ const Recipe = (props) => {
       const { data } = await axiosRes.get(`/recipes/${id}/`);
       setRecipes((prevRecipes) => ({
         ...prevRecipes,
-        results: prevRecipes.results.map((recipe) => recipe.id === id ? data : recipe),
+        results: prevRecipes.results.map((recipe) =>
+          recipe.id === id ? data : recipe,
+        ),
       }));
     } catch {
       setVoteError("Could not update the vote. Please try again.");
@@ -106,7 +109,12 @@ const Recipe = (props) => {
         </div>
       </Card.Body>
       <Link to={`/recipes/${id}`}>
-        <Card.Img src={image} alt={title} />
+        <RecipeImage
+          src={image}
+          alt={title}
+          className="card-img"
+          loading={recipePage ? "eager" : "lazy"}
+        />
       </Link>
       <Card.Body>
         {title && <Card.Title className="text-center">{title}</Card.Title>}
@@ -189,7 +197,9 @@ const Recipe = (props) => {
                 <button
                   type="button"
                   className={styles.VoteButton}
-                  aria-label={isUpvoted ? "Remove upvote" : "Upvote this recipe"}
+                  aria-label={
+                    isUpvoted ? "Remove upvote" : "Upvote this recipe"
+                  }
                   aria-pressed={!!isUpvoted}
                   disabled={votePending}
                   onClick={() => changeVote("upvote")}
@@ -214,7 +224,9 @@ const Recipe = (props) => {
                 <button
                   type="button"
                   className={styles.VoteButton}
-                  aria-label={isDownvoted ? "Remove downvote" : "Downvote this recipe"}
+                  aria-label={
+                    isDownvoted ? "Remove downvote" : "Downvote this recipe"
+                  }
                   aria-pressed={!!isDownvoted}
                   disabled={votePending}
                   onClick={() => changeVote("downvote")}
@@ -239,7 +251,9 @@ const Recipe = (props) => {
             </OverlayTrigger>
           )}
 
-          <span className="fw-bold ms-1" aria-label="Net vote score">{votes_count || 0}</span>
+          <span className="fw-bold ms-1" aria-label="Net vote score">
+            {votes_count || 0}
+          </span>
 
           <Link to={`/recipes/${id}`} className="ml-3">
             <i className="far fa-comments mr-1" />
