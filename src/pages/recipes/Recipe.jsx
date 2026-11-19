@@ -9,7 +9,7 @@ import Tooltip from "react-bootstrap/Tooltip";
 import { Link, useNavigate } from "react-router-dom";
 import Avatar from "../../components/Avatar";
 import { axiosRes } from "../../api/axiosDefaults";
-import { MoreDropdown } from "../../components/MoreDropdown";
+import Button from "react-bootstrap/Button";
 
 const Recipe = (props) => {
   const {
@@ -45,11 +45,17 @@ const Recipe = (props) => {
   };
 
   const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this recipe? This action cannot be undone.",
+    );
+    if (!confirmDelete) return;
+
     try {
       await axiosRes.delete(`/recipes/${id}/`);
-      navigate(-1);
+      navigate("/", { replace: true });
     } catch (err) {
-      console.log(err);
+      console.error("Could not delete recipe:", err);
+      window.alert("Could not delete the recipe. Please try again.");
     }
   };
 
@@ -99,12 +105,6 @@ const Recipe = (props) => {
           </Link>
           <div className="d-flex align-items-center">
             <span>{updated_at}</span>
-            {is_owner && recipePage && (
-              <MoreDropdown
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-              />
-            )}
           </div>
         </div>
       </Card.Body>
@@ -118,6 +118,19 @@ const Recipe = (props) => {
       </Link>
       <Card.Body>
         {title && <Card.Title className="text-center">{title}</Card.Title>}
+
+        {/* Recipe management controls for the owner */}
+        {is_owner && recipePage && (
+          <div className="d-flex flex-wrap justify-content-center gap-2 my-3">
+            <Button variant="outline-primary" size="sm" onClick={handleEdit}>
+              Edit recipe
+            </Button>
+
+            <Button variant="outline-danger" size="sm" onClick={handleDelete}>
+              Delete recipe
+            </Button>
+          </div>
+        )}
 
         {/* Recipe Meta Badges */}
         <div className={styles.RecipeMeta}>
