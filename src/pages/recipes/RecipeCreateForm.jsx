@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { formErrors } from "../../utils/errors";
+import { validateRecipe, buildRecipeFormData } from "../../utils/recipeForm";
 import { useAuthLoading } from "../../contexts/CurrentUserContext";
 
 import Form from "react-bootstrap/Form";
@@ -24,6 +25,8 @@ function RecipeCreateForm() {
   useRedirect("loggedOut");
   const authLoading = useAuthLoading();
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   const [recipeData, setRecipeData] = useState({
     title: "",
@@ -74,28 +77,63 @@ function RecipeCreateForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const formData = new FormData();
 
-    formData.append("title", title);
-    formData.append("ingredients", ingredients);
-    formData.append("instructions", instructions);
-    formData.append("cooking_time", cooking_time);
-    if (imageInput?.current?.files?.[0]) {
-      formData.append("image", imageInput.current.files[0]);
+    // Prevent duplicate submissions.
+    if (submittingRef.current) return;
+
+    // Validate before contacting the API.
+    const validationErrors = validateRecipe(recipeData);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
-    formData.append("difficulty_level", difficulty_level);
-    formData.append("category", category);
+
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    setErrors({});
 
     try {
+      const formData = buildRecipeFormData(
+        recipeData,
+        imageInput.current?.files?.[0],
+      );
+
       const { data } = await axiosReq.post("/recipes/", formData);
+
       navigate(`/recipes/${data.id}`);
     } catch (err) {
-      console.log(err);
-      if (err.response?.status !== 401) {
-        setErrors(formErrors(err));
-      }
+      setErrors(formErrors(err));
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   };
+
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+  //   const formData = new FormData();
+
+  //   formData.append("title", title);
+  //   formData.append("ingredients", ingredients);
+  //   formData.append("instructions", instructions);
+  //   formData.append("cooking_time", cooking_time);
+  //   if (imageInput?.current?.files?.[0]) {
+  //     formData.append("image", imageInput.current.files[0]);
+  //   }
+  //   formData.append("difficulty_level", difficulty_level);
+  //   formData.append("category", category);
+
+  //   try {
+  //     const { data } = await axiosReq.post("/recipes/", formData);
+  //     navigate(`/recipes/${data.id}`);
+  //   } catch (err) {
+  //     console.log(err);
+  //     if (err.response?.status !== 401) {
+  //       setErrors(formErrors(err));
+  //     }
+  //   }
+  // };
 
   const textFields = (
     <div className="text-center">
@@ -147,13 +185,13 @@ function RecipeCreateForm() {
       ))}
 
       <Form.Group>
-        <Form.Label>Cooking Time (minutes)</Form.Label>
+        <Form.Label>Cooking Time (minutes, optional)</Form.Label>
         <Form.Control
           type="number"
           name="cooking_time"
           value={cooking_time}
-          min="0" // Min attribute to prevent the user from entering negative values
-          required
+          min={1}
+          step={1}
           onChange={handleChange}
         />
       </Form.Group>
@@ -200,6 +238,23 @@ function RecipeCreateForm() {
       ))}
 
       <Button
+        type="button"
+        className={`${btnStyles.Button} ${btnStyles.Blue}`}
+        onClick={() => navigate(-1)}
+        disabled={isSubmitting}
+      >
+        Cancel
+      </Button>
+
+      <Button
+        type="submit"
+        className={`${btnStyles.Button} ${btnStyles.Blue}`}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Creating..." : "Create"}
+      </Button>
+
+      {/* <Button
         className={`${btnStyles.Button} ${btnStyles.Blue}`}
         onClick={() => navigate(-1)}
       >
@@ -207,13 +262,13 @@ function RecipeCreateForm() {
       </Button>
       <Button className={`${btnStyles.Button} ${btnStyles.Blue}`} type="submit">
         create
-      </Button>
+      </Button> */}
     </div>
   );
 
   if (authLoading) return <Asset spinner />;
   return (
-    <Form onSubmit={handleSubmit}>
+    <Form noValidate onSubmit={handleSubmit}>
       {errors.non_field_errors?.map((message, idx) => (
         <Alert key={idx} variant="warning">
           {message}
