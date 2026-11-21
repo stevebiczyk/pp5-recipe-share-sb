@@ -20,7 +20,7 @@ export const validateRecipe = (recipeData) => {
 
   // Cooking time is optional but must be a positive integer if provided
   if (cooking_time !== "" && cooking_time !== null) {
-    const minutes = number(cooking_time);
+    const minutes = Number(cooking_time);
 
     if (!Number.isSafeInteger(minutes) || minutes < 1 || minutes > 2147483647) {
       errors.cooking_time = [

@@ -17,6 +17,7 @@ import btnStyles from "../../styles/Button.module.css";
 import Asset from "../../components/Asset";
 import Alert from "react-bootstrap/Alert";
 import RecipeImage from "../../components/RecipeImage";
+import RecipeFormFields from "../../components/RecipeFormFields";
 import { useNavigate } from "react-router-dom";
 import { axiosReq } from "../../api/axiosDefaults";
 import { useRedirect } from "../../hooks/useRedirect";
@@ -37,15 +38,7 @@ function RecipeCreateForm() {
     difficulty_level: "",
     category: "",
   });
-  const {
-    title,
-    ingredients,
-    instructions,
-    cooking_time,
-    image,
-    difficulty_level,
-    category,
-  } = recipeData;
+  const { title, image } = recipeData;
 
   const imageInput = useRef(null);
 
@@ -135,108 +128,139 @@ function RecipeCreateForm() {
   //   }
   // };
 
-  const textFields = (
-    <div className="text-center">
-      <Form.Group>
-        <Form.Label>Title</Form.Label>
-        <Form.Control
-          type="text"
-          name="title"
-          value={title}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      {errors?.title?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  // const textFields = (
+  //   <div className="text-center">
+  //     <Form.Group>
+  //       <Form.Label>Title</Form.Label>
+  //       <Form.Control
+  //         type="text"
+  //         name="title"
+  //         value={title}
+  //         onChange={handleChange}
+  //       />
+  //     </Form.Group>
+  //     {errors?.title?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
 
-      <Form.Group>
-        <Form.Label>Ingredients</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={6}
-          name="ingredients"
-          value={ingredients}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      {errors?.ingredients?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  //     <Form.Group>
+  //       <Form.Label>Ingredients</Form.Label>
+  //       <Form.Control
+  //         as="textarea"
+  //         rows={6}
+  //         name="ingredients"
+  //         value={ingredients}
+  //         onChange={handleChange}
+  //       />
+  //     </Form.Group>
+  //     {errors?.ingredients?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
 
-      <Form.Group>
-        <Form.Label>Instructions</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={6}
-          name="instructions"
-          value={instructions}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      {errors?.instructions?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  //     <Form.Group>
+  //       <Form.Label>Instructions</Form.Label>
+  //       <Form.Control
+  //         as="textarea"
+  //         rows={6}
+  //         name="instructions"
+  //         value={instructions}
+  //         onChange={handleChange}
+  //       />
+  //     </Form.Group>
+  //     {errors?.instructions?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
 
-      <Form.Group>
-        <Form.Label>Cooking Time (minutes, optional)</Form.Label>
-        <Form.Control
-          type="number"
-          name="cooking_time"
-          value={cooking_time}
-          min={1}
-          step={1}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      {errors?.cooking_time?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
-      <Form.Group>
-        <Form.Label>Difficulty Level</Form.Label>
-        <Form.Select
-          name="difficulty_level"
-          value={difficulty_level}
-          onChange={handleChange}
-        >
-          <option value="">Select</option>
-          <option value="Easy">Easy</option>
-          <option value="Medium">Medium</option>
-          <option value="Hard">Hard</option>
-        </Form.Select>
-      </Form.Group>
-      {errors?.difficulty_level?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  //     <Form.Group>
+  //       <Form.Label>Cooking Time (minutes, optional)</Form.Label>
+  //       <Form.Control
+  //         type="number"
+  //         name="cooking_time"
+  //         value={cooking_time}
+  //         min={1}
+  //         step={1}
+  //         onChange={handleChange}
+  //       />
+  //     </Form.Group>
+  //     {errors?.cooking_time?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
+  //     <Form.Group>
+  //       <Form.Label>Difficulty Level</Form.Label>
+  //       <Form.Select
+  //         name="difficulty_level"
+  //         value={difficulty_level}
+  //         onChange={handleChange}
+  //       >
+  //         <option value="">Select</option>
+  //         <option value="Easy">Easy</option>
+  //         <option value="Medium">Medium</option>
+  //         <option value="Hard">Hard</option>
+  //       </Form.Select>
+  //     </Form.Group>
+  //     {errors?.difficulty_level?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
 
-      <Form.Group>
-        <Form.Label>Category</Form.Label>
-        <Form.Select name="category" value={category} onChange={handleChange}>
-          <option value="">Select Category</option>
-          <option value="Vegetarian">Vegetarian</option>
-          <option value="Vegan">Vegan</option>
-          <option value="Dairy-free">Dairy-free</option>
-          <option value="Gluten-free">Gluten-free</option>
-          <option value="Healthy Meals">Healthy Meals</option>
-          <option value="Quick and Easy">Quick and Easy</option>
-        </Form.Select>
-      </Form.Group>
-      {errors?.category?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  //     <Form.Group>
+  //       <Form.Label>Category</Form.Label>
+  //       <Form.Select name="category" value={category} onChange={handleChange}>
+  //         <option value="">Select Category</option>
+  //         <option value="Vegetarian">Vegetarian</option>
+  //         <option value="Vegan">Vegan</option>
+  //         <option value="Dairy-free">Dairy-free</option>
+  //         <option value="Gluten-free">Gluten-free</option>
+  //         <option value="Healthy Meals">Healthy Meals</option>
+  //         <option value="Quick and Easy">Quick and Easy</option>
+  //       </Form.Select>
+  //     </Form.Group>
+  //     {errors?.category?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
 
+  //     <Button
+  //       type="button"
+  //       className={`${btnStyles.Button} ${btnStyles.Blue}`}
+  //       onClick={() => navigate(-1)}
+  //       disabled={isSubmitting}
+  //     >
+  //       Cancel
+  //     </Button>
+
+  //     <Button
+  //       type="submit"
+  //       className={`${btnStyles.Button} ${btnStyles.Blue}`}
+  //       disabled={isSubmitting}
+  //     >
+  //       {isSubmitting ? "Creating..." : "Create"}
+  //     </Button>
+
+  //     {/* <Button
+  //       className={`${btnStyles.Button} ${btnStyles.Blue}`}
+  //       onClick={() => navigate(-1)}
+  //     >
+  //       cancel
+  //     </Button>
+  //     <Button className={`${btnStyles.Button} ${btnStyles.Blue}`} type="submit">
+  //       create
+  //     </Button> */}
+  //   </div>
+  // );
+
+  const formActions = (
+    <div className="d-flex flex-wrap gap-2 mt-4">
       <Button
         type="button"
         className={`${btnStyles.Button} ${btnStyles.Blue}`}
@@ -253,16 +277,6 @@ function RecipeCreateForm() {
       >
         {isSubmitting ? "Creating..." : "Create"}
       </Button>
-
-      {/* <Button
-        className={`${btnStyles.Button} ${btnStyles.Blue}`}
-        onClick={() => navigate(-1)}
-      >
-        cancel
-      </Button>
-      <Button className={`${btnStyles.Button} ${btnStyles.Blue}`} type="submit">
-        create
-      </Button> */}
     </div>
   );
 
@@ -325,11 +339,24 @@ function RecipeCreateForm() {
               </Alert>
             ))}
 
-            <div className="d-md-none">{textFields}</div>
+            {/* <div className="d-md-none">{textFields}</div> */}
           </Container>
         </Col>
-        <Col md={5} lg={4} className="d-none d-md-block p-0 p-md-2">
+        {/* <Col md={5} lg={4} className="d-none d-md-block p-0 p-md-2">
           <Container className={appStyles.Content}>{textFields}</Container>
+        </Col> */}
+
+        <Col md={5} lg={4} className="p-0 p-md-2">
+          <Container className={`${appStyles.Content} p-3`}>
+            <RecipeFormFields
+              recipeData={recipeData}
+              errors={errors}
+              onChange={handleChange}
+              disabled={isSubmitting}
+            />
+
+            {formActions}
+          </Container>
         </Col>
       </Row>
     </Form>

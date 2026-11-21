@@ -11,9 +11,11 @@ import appStyles from "../../App.module.css";
 import btnStyles from "../../styles/Button.module.css";
 import Alert from "react-bootstrap/Alert";
 import RecipeImage from "../../components/RecipeImage";
+import RecipeFormFields from "../../components/RecipeFormFields";
 import { useNavigate, useParams } from "react-router-dom";
 import { axiosReq } from "../../api/axiosDefaults";
 import { formErrors } from "../../utils/errors";
+import { validateRecipe, buildRecipeFormData } from "../../utils/recipeForm";
 import {
   useAuthLoading,
   useCurrentUser,
@@ -27,6 +29,8 @@ function RecipeEditForm() {
   const authLoading = useAuthLoading();
   const currentUser = useCurrentUser();
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -40,15 +44,7 @@ function RecipeEditForm() {
     difficulty_level: "",
     category: "",
   });
-  const {
-    title,
-    ingredients,
-    instructions,
-    cooking_time,
-    image,
-    difficulty_level,
-    category,
-  } = recipeData;
+  const { title, image } = recipeData;
 
   const imageInput = useRef(null);
   const navigate = useNavigate();
@@ -133,138 +129,201 @@ function RecipeEditForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const formData = new FormData();
 
-    formData.append("title", title);
-    formData.append("ingredients", ingredients);
-    formData.append("instructions", instructions);
-    formData.append("cooking_time", cooking_time);
-    formData.append("difficulty_level", difficulty_level);
-    formData.append("category", category);
+    // Prevent duplicate submissions.
+    if (submittingRef.current) return;
 
-    if (imageInput?.current?.files?.[0]) {
-      formData.append("image", imageInput.current.files[0]);
+    const validationErrors = validateRecipe(recipeData);
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
     }
 
+    submittingRef.current = true;
+    setIsSubmitting(true);
+    setErrors({});
+
     try {
+      const formData = buildRecipeFormData(
+        recipeData,
+        imageInput.current?.files?.[0],
+      );
+
       await axiosReq.put(`/recipes/${id}/`, formData);
+
       navigate(`/recipes/${id}`);
     } catch (err) {
-      console.log(err);
-      if (err.response?.status !== 401) {
-        setErrors(formErrors(err));
-      }
+      setErrors(formErrors(err));
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   };
 
-  const textFields = (
-    <div className="text-center">
-      <Form.Group>
-        <Form.Label>Title</Form.Label>
-        <Form.Control
-          type="text"
-          name="title"
-          value={title}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      {errors?.title?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  // const handleSubmit = async (event) => {
+  //   event.preventDefault();
+  //   const formData = new FormData();
 
-      <Form.Group>
-        <Form.Label>Ingredients</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={6}
-          name="ingredients"
-          value={ingredients}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      {errors?.ingredients?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  //   formData.append("title", title);
+  //   formData.append("ingredients", ingredients);
+  //   formData.append("instructions", instructions);
+  //   formData.append("cooking_time", cooking_time);
+  //   formData.append("difficulty_level", difficulty_level);
+  //   formData.append("category", category);
 
-      <Form.Group>
-        <Form.Label>Instructions</Form.Label>
-        <Form.Control
-          as="textarea"
-          rows={6}
-          name="instructions"
-          value={instructions}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      {errors?.instructions?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  //   if (imageInput?.current?.files?.[0]) {
+  //     formData.append("image", imageInput.current.files[0]);
+  //   }
 
-      <Form.Group>
-        <Form.Label>Cooking Time (minutes)</Form.Label>
-        <Form.Control
-          type="number"
-          name="cooking_time"
-          value={cooking_time}
-          onChange={handleChange}
-        />
-      </Form.Group>
-      {errors?.cooking_time?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
-      <Form.Group>
-        <Form.Label>Difficulty Level</Form.Label>
-        <Form.Select
-          name="difficulty_level"
-          value={difficulty_level}
-          onChange={handleChange}
-        >
-          <option value="">Select</option>
-          <option value="Easy">Easy</option>
-          <option value="Medium">Medium</option>
-          <option value="Hard">Hard</option>
-        </Form.Select>
-      </Form.Group>
-      {errors?.difficulty_level?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  //   try {
+  //     await axiosReq.put(`/recipes/${id}/`, formData);
+  //     navigate(`/recipes/${id}`);
+  //   } catch (err) {
+  //     console.log(err);
+  //     if (err.response?.status !== 401) {
+  //       setErrors(formErrors(err));
+  //     }
+  //   }
+  // };
 
-      <Form.Group>
-        <Form.Label>Category</Form.Label>
-        <Form.Select name="category" value={category} onChange={handleChange}>
-          <option value="">Select Category</option>
-          <option value="Vegetarian">Vegetarian</option>
-          <option value="Vegan">Vegan</option>
-          <option value="Dairy-free">Dairy-free</option>
-          <option value="Gluten-free">Gluten-free</option>
-          <option value="Healthy Meals">Healthy Meals</option>
-          <option value="Quick and Easy">Quick and Easy</option>
-        </Form.Select>
-      </Form.Group>
-      {errors?.category?.map((message, idx) => (
-        <Alert variant="warning" key={idx}>
-          {message}
-        </Alert>
-      ))}
+  // const textFields = (
+  //   <div className="text-center">
+  //     <Form.Group>
+  //       <Form.Label>Title</Form.Label>
+  //       <Form.Control
+  //         type="text"
+  //         name="title"
+  //         value={title}
+  //         onChange={handleChange}
+  //       />
+  //     </Form.Group>
+  //     {errors?.title?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
 
+  //     <Form.Group>
+  //       <Form.Label>Ingredients</Form.Label>
+  //       <Form.Control
+  //         as="textarea"
+  //         rows={6}
+  //         name="ingredients"
+  //         value={ingredients}
+  //         onChange={handleChange}
+  //       />
+  //     </Form.Group>
+  //     {errors?.ingredients?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
+
+  //     <Form.Group>
+  //       <Form.Label>Instructions</Form.Label>
+  //       <Form.Control
+  //         as="textarea"
+  //         rows={6}
+  //         name="instructions"
+  //         value={instructions}
+  //         onChange={handleChange}
+  //       />
+  //     </Form.Group>
+  //     {errors?.instructions?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
+
+  //     <Form.Group>
+  //       <Form.Label>Cooking Time (minutes, optional)</Form.Label>
+  //       <Form.Control
+  //         type="number"
+  //         name="cooking_time"
+  //         value={cooking_time}
+  //         min={1}
+  //         step={1}
+  //         onChange={handleChange}
+  //       />
+  //     </Form.Group>
+  //     {errors?.cooking_time?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
+  //     <Form.Group>
+  //       <Form.Label>Difficulty Level</Form.Label>
+  //       <Form.Select
+  //         name="difficulty_level"
+  //         value={difficulty_level}
+  //         onChange={handleChange}
+  //       >
+  //         <option value="">Select</option>
+  //         <option value="Easy">Easy</option>
+  //         <option value="Medium">Medium</option>
+  //         <option value="Hard">Hard</option>
+  //       </Form.Select>
+  //     </Form.Group>
+  //     {errors?.difficulty_level?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
+
+  //     <Form.Group>
+  //       <Form.Label>Category</Form.Label>
+  //       <Form.Select name="category" value={category} onChange={handleChange}>
+  //         <option value="">Select Category</option>
+  //         <option value="Vegetarian">Vegetarian</option>
+  //         <option value="Vegan">Vegan</option>
+  //         <option value="Dairy-free">Dairy-free</option>
+  //         <option value="Gluten-free">Gluten-free</option>
+  //         <option value="Healthy Meals">Healthy Meals</option>
+  //         <option value="Quick and Easy">Quick and Easy</option>
+  //       </Form.Select>
+  //     </Form.Group>
+  //     {errors?.category?.map((message, idx) => (
+  //       <Alert variant="warning" key={idx}>
+  //         {message}
+  //       </Alert>
+  //     ))}
+
+  //     <Button
+  //       type="button"
+  //       className={`${btnStyles.Button} ${btnStyles.Blue}`}
+  //       onClick={() => navigate(-1)}
+  //       disabled={isSubmitting}
+  //     >
+  //       Cancel
+  //     </Button>
+  //     <Button
+  //       type="submit"
+  //       className={`${btnStyles.Button} ${btnStyles.Blue}`}
+  //       disabled={isSubmitting}
+  //     >
+  //       {isSubmitting ? "Saving..." : "Save"}
+  //     </Button>
+  //   </div>
+  // );
+
+  const formActions = (
+    <div className="d-flex flex-wrap gap-2 mt-4">
       <Button
+        type="button"
         className={`${btnStyles.Button} ${btnStyles.Blue}`}
         onClick={() => navigate(-1)}
+        disabled={isSubmitting}
       >
         Cancel
       </Button>
-      <Button className={`${btnStyles.Button} ${btnStyles.Blue}`} type="submit">
-        Save
+
+      <Button
+        type="submit"
+        className={`${btnStyles.Button} ${btnStyles.Blue}`}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? "Saving..." : "Save"}
       </Button>
     </div>
   );
@@ -278,7 +337,7 @@ function RecipeEditForm() {
     );
   if (authLoading || !hasLoaded) return <Asset spinner />;
   return (
-    <Form onSubmit={handleSubmit}>
+    <Form noValidate onSubmit={handleSubmit}>
       {errors.non_field_errors?.map((message, idx) => (
         <Alert key={idx} variant="warning">
           {message}
@@ -320,11 +379,24 @@ function RecipeEditForm() {
               </Alert>
             ))}
 
-            <div className="d-md-none">{textFields}</div>
+            {/* <div className="d-md-none">{textFields}</div> */}
           </Container>
         </Col>
-        <Col md={5} lg={4} className="d-none d-md-block p-0 p-md-2">
+        {/* <Col md={5} lg={4} className="d-none d-md-block p-0 p-md-2">
           <Container className={appStyles.Content}>{textFields}</Container>
+        </Col> */}
+
+        <Col md={5} lg={4} className="p-0 p-md-2">
+          <Container className={`${appStyles.Content} p-3`}>
+            <RecipeFormFields
+              recipeData={recipeData}
+              errors={errors}
+              onChange={handleChange}
+              disabled={isSubmitting}
+            />
+
+            {formActions}
+          </Container>
         </Col>
       </Row>
     </Form>
