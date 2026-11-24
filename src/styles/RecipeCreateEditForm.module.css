@@ -1,3 +1,18 @@
 .Container {
   min-height: 343px;
 }
+
+.ImagePreview {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto 1rem;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background-color: #f0eee8;
+}
+
+.ImagePreview img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+}

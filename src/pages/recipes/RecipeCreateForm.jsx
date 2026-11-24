@@ -18,6 +18,7 @@ import Asset from "../../components/Asset";
 import Alert from "react-bootstrap/Alert";
 import RecipeImage from "../../components/RecipeImage";
 import RecipeFormFields from "../../components/RecipeFormFields";
+import RecipeImageUpload from "../../components/RecipeImageUpload";
 import { useNavigate } from "react-router-dom";
 import { axiosReq } from "../../api/axiosDefaults";
 import { useRedirect } from "../../hooks/useRedirect";
@@ -26,6 +27,7 @@ function RecipeCreateForm() {
   useRedirect("loggedOut");
   const authLoading = useAuthLoading();
   const [errors, setErrors] = useState({});
+  const [imageFile, setImageFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
 
@@ -40,16 +42,16 @@ function RecipeCreateForm() {
   });
   const { title, image } = recipeData;
 
-  const imageInput = useRef(null);
+  // const imageInput = useRef(null);
 
   const navigate = useNavigate();
 
-  useEffect(
-    () => () => {
-      if (image.startsWith("blob:")) URL.revokeObjectURL(image);
-    },
-    [image],
-  );
+  // useEffect(
+  //   () => () => {
+  //     if (image.startsWith("blob:")) URL.revokeObjectURL(image);
+  //   },
+  //   [image],
+  // );
 
   const handleChange = (event) => {
     setRecipeData({
@@ -58,15 +60,16 @@ function RecipeCreateForm() {
     });
   };
 
-  const handleChangeImage = (event) => {
-    if (event.target.files.length) {
-      URL.revokeObjectURL(image);
-      setRecipeData({
-        ...recipeData,
-        image: URL.createObjectURL(event.target.files[0]),
-      });
-    }
-  };
+  // const handleChangeImage = (event) => {
+  //   if (event.target.files.length) {
+  //     URL.revokeObjectURL(image);
+  //     setRecipeData({
+  //       ...recipeData,
+  //       image: URL.createObjectURL(event.target.files[0]),
+  //     });
+  //   }
+  // };
+  //
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -87,10 +90,7 @@ function RecipeCreateForm() {
     setErrors({});
 
     try {
-      const formData = buildRecipeFormData(
-        recipeData,
-        imageInput.current?.files?.[0],
-      );
+      const formData = buildRecipeFormData(recipeData, imageFile);
 
       const { data } = await axiosReq.post("/recipes/", formData);
 
@@ -293,7 +293,7 @@ function RecipeCreateForm() {
           <Container
             className={`${appStyles.Content} ${styles.Container} d-flex flex-column justify-content-center`}
           >
-            <Form.Group className="text-center">
+            {/* <Form.Group className="text-center">
               {image ? (
                 <>
                   <figure>
@@ -337,9 +337,18 @@ function RecipeCreateForm() {
               <Alert variant="warning" key={idx}>
                 {message}
               </Alert>
-            ))}
+            ))} */}
 
             {/* <div className="d-md-none">{textFields}</div> */}
+
+            <RecipeImageUpload
+              currentImage=""
+              selectedFile={imageFile}
+              onFileChange={setImageFile}
+              errors={errors.image || []}
+              disabled={isSubmitting}
+              title={recipeData.title || "Recipe"}
+            />
           </Container>
         </Col>
         {/* <Col md={5} lg={4} className="d-none d-md-block p-0 p-md-2">
